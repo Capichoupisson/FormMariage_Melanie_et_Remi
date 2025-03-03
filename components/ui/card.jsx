@@ -1,4 +1,4 @@
-const Card = ({ className, children, ...props }) =&gt; {
+const Card = ({ className, children, ...props } =&gt); {
 return (
 &lt;div
 className={`rounded-lg border border-gray-200 ${className || &#39;&#39;}`}
