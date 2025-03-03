@@ -164,60 +164,195 @@
             margin-top: 20px;
             display: none;
         }
+        
+        /* Admin Dashboard Styles */
+        #adminDashboard {
+            display: none;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .admin-table th, .admin-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .admin-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .admin-table tr:nth-child(even) {
+            background-color: rgba(249, 228, 183, 0.3);
+        }
+        
+        .admin-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .reset-btn {
+            background-color: #dc3545;
+        }
+        
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .back-btn {
+            background-color: #6c757d;
+        }
+        
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .status-reserved {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .status-available {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 500px;
+        }
+        
+        .modal-title {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Réservation de Chambre - Notre Mariage</h1>
-        
-        <div class="success-message" id="successMessage">
-            Votre réservation a été enregistrée avec succès !
-        </div>
-        
-        <div class="form-section" id="userInfoSection">
-            <h2>Vos Informations</h2>
-            <div>
-                <label for="firstName">Prénom</label>
-                <input type="text" id="firstName" placeholder="Votre prénom" required>
-            </div>
-            <div>
-                <label for="lastName">Nom</label>
-                <input type="text" id="lastName" placeholder="Votre nom" required>
-            </div>
-            <div>
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="Votre email" required>
-            </div>
-            <button id="continueToRoomSelection">Continuer</button>
-        </div>
-        
-        <div class="form-section" id="roomSelectionSection" style="display:none;">
-            <h2>Sélection de Chambre</h2>
-            <div class="room-list" id="roomList">
-                <!-- Rooms will be generated here -->
+        <div id="mainContent">
+            <h1>Réservation de Chambre - Notre Mariage</h1>
+            
+            <div class="success-message" id="successMessage">
+                Votre réservation a été enregistrée avec succès ! Un email de confirmation a été envoyé à votre adresse.
             </div>
             
-            <div class="occupants-section" id="occupantsSection">
-                <h3>Autres Occupants</h3>
-                <div id="occupantsFields">
-                    <!-- Occupant fields will be generated here -->
+            <div class="form-section" id="userInfoSection">
+                <h2>Vos Informations</h2>
+                <div>
+                    <label for="firstName">Prénom</label>
+                    <input type="text" id="firstName" placeholder="Votre prénom" required>
                 </div>
-                <button id="validateReservation" disabled>Valider la réservation</button>
+                <div>
+                    <label for="lastName">Nom</label>
+                    <input type="text" id="lastName" placeholder="Votre nom" required>
+                </div>
+                <div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="Votre email" required>
+                </div>
+                <button id="continueToRoomSelection">Continuer</button>
+            </div>
+            
+            <div class="form-section" id="roomSelectionSection" style="display:none;">
+                <h2>Sélection de Chambre</h2>
+                <div class="room-list" id="roomList">
+                    <!-- Rooms will be generated here -->
+                </div>
+                
+                <div class="occupants-section" id="occupantsSection">
+                    <h3>Autres Occupants</h3>
+                    <div id="occupantsFields">
+                        <!-- Occupant fields will be generated here -->
+                    </div>
+                    <button id="validateReservation" disabled>Valider la réservation</button>
+                </div>
+            </div>
+            
+            <div class="form-section" id="confirmationSection" style="display:none;">
+                <h2>Confirmation de Réservation</h2>
+                <div id="reservationSummary"></div>
+                <button id="confirmReservation">Confirmer la réservation</button>
+                <button id="backToRooms">Modifier la sélection</button>
+            </div>
+            
+            <div class="admin-section">
+                <h2>Administration</h2>
+                <div id="adminPasswordContainer">
+                    <input type="password" id="adminPassword" placeholder="Mot de passe administrateur">
+                    <button id="loginAdmin">Accéder à l'administration</button>
+                </div>
             </div>
         </div>
         
-        <div class="form-section" id="confirmationSection" style="display:none;">
-            <h2>Confirmation de Réservation</h2>
-            <div id="reservationSummary"></div>
-            <button id="confirmReservation">Confirmer la réservation</button>
-            <button id="backToRooms">Modifier la sélection</button>
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" style="display:none;">
+            <h1>Tableau de Bord Administrateur</h1>
+            
+            <div class="form-section">
+                <h2>État des Chambres</h2>
+                <table class="admin-table" id="roomsTable">
+                    <thead>
+                        <tr>
+                            <th>N° Chambre</th>
+                            <th>Type de lit</th>
+                            <th>Capacité</th>
+                            <th>Statut</th>
+                            <th>Réservé par</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Room data will be generated here -->
+                    </tbody>
+                </table>
+                
+                <div class="admin-buttons">
+                    <button id="exportDataAdmin">Exporter les données (.csv)</button>
+                    <button id="logoutAdmin" class="back-btn">Retour au formulaire</button>
+                </div>
+            </div>
         </div>
-        
-        <div class="admin-section">
-            <h2>Administration</h2>
-            <div id="adminPasswordContainer">
-                <input type="password" id="adminPassword" placeholder="Mot de passe administrateur">
-                <button id="exportData">Exporter les données</button>
+    </div>
+    
+    <!-- Modal de confirmation pour réinitialiser une chambre -->
+    <div id="resetRoomModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Confirmer la réinitialisation</h3>
+            <p>Êtes-vous sûr de vouloir réinitialiser la chambre <span id="resetRoomNumber"></span> ?</p>
+            <p>Toutes les données de réservation pour cette chambre seront supprimées.</p>
+            <div class="modal-buttons">
+                <button id="confirmResetRoom" class="reset-btn">Confirmer</button>
+                <button id="cancelResetRoom" class="back-btn">Annuler</button>
             </div>
         </div>
     </div>
@@ -265,15 +400,16 @@
             { roomNumber: 50, bedType: "Avec 5 lits séparés", capacity: 5 }
         ];
         
-        // Initialisation de la liste des chambres
-        let chambres = dbChambresInitiales.map(room => new Chambre(room.roomNumber, room.bedType, room.capacity));
-        
-        // Données de réservation
+        // Variables globales
+        let chambres = [];
         let reservations = [];
         let currentUser = null;
         let selectedRoom = null;
+        let roomToReset = null;
         
         // Elements DOM
+        const mainContent = document.getElementById('mainContent');
+        const adminDashboard = document.getElementById('adminDashboard');
         const userInfoSection = document.getElementById('userInfoSection');
         const roomSelectionSection = document.getElementById('roomSelectionSection');
         const confirmationSection = document.getElementById('confirmationSection');
@@ -282,13 +418,20 @@
         const occupantsFields = document.getElementById('occupantsFields');
         const reservationSummary = document.getElementById('reservationSummary');
         const successMessage = document.getElementById('successMessage');
+        const roomsTable = document.getElementById('roomsTable');
+        const resetRoomModal = document.getElementById('resetRoomModal');
+        const resetRoomNumber = document.getElementById('resetRoomNumber');
         
         // Boutons
         const continueToRoomSelectionBtn = document.getElementById('continueToRoomSelection');
         const validateReservationBtn = document.getElementById('validateReservation');
         const confirmReservationBtn = document.getElementById('confirmReservation');
         const backToRoomsBtn = document.getElementById('backToRooms');
-        const exportDataBtn = document.getElementById('exportData');
+        const loginAdminBtn = document.getElementById('loginAdmin');
+        const logoutAdminBtn = document.getElementById('logoutAdmin');
+        const exportDataAdminBtn = document.getElementById('exportDataAdmin');
+        const confirmResetRoomBtn = document.getElementById('confirmResetRoom');
+        const cancelResetRoomBtn = document.getElementById('cancelResetRoom');
         
         // Fonction pour saisir un nouvel utilisateur
         function saisieNouvelUtilisateur() {
@@ -444,13 +587,51 @@
             });
             
             // Sauvegarder dans le stockage local
-            localStorage.setItem('reservations', JSON.stringify(reservations));
+            saveDataToLocalStorage();
+            
+            // Envoyer l'email de confirmation
+            envoyerEmailConfirmation(currentUser.email, selectedRoom, occupants);
             
             // Afficher le message de succès
             successMessage.style.display = 'block';
             
             // Réinitialiser le formulaire
             resetForm();
+        }
+        
+        // Fonction pour envoyer un email de confirmation
+        function envoyerEmailConfirmation(email, chambre, occupants) {
+            // Dans un environnement réel, cette fonction enverrait un email
+            // Ici, nous simulons l'envoi d'un email en affichant les détails dans la console
+            
+            console.log("Envoi d'un email de confirmation à:", email);
+            console.log("Sujet: Confirmation de réservation de chambre - Mariage");
+            
+            const emailContent = `
+                Cher(e) ${currentUser.prenom} ${currentUser.nom},
+                
+                Nous vous remercions pour votre réservation. Voici les détails de votre réservation:
+                
+                Chambre: ${chambre.roomNumber}
+                Type de lit: ${chambre.bedType}
+                Capacité: ${chambre.capacity} personne(s)
+                
+                Occupants: 
+                - ${currentUser.prenom} ${currentUser.nom}
+                ${occupants.map(occupant => `- ${occupant}`).join('\n')}
+                
+                Nous avons hâte de vous accueillir pour notre mariage!
+                
+                Cordialement,
+                Les futurs mariés
+            `;
+            
+            console.log("Contenu de l'email:");
+            console.log(emailContent);
+            
+            // Dans un environnement réel, nous utiliserions un service d'email comme:
+            // emailjs.send("service_id", "template_id", { to_email: email, ... })
+            // ou une API backend pour envoyer l'email
         }
         
         // Fonction pour réinitialiser le formulaire
@@ -471,25 +652,120 @@
             afficherChambresDisponibles();
         }
         
-        // Fonction pour exporter les données
-        function exportData() {
-            const password = document.getElementById('adminPassword').value;
+        // Fonction pour sauvegarder les données dans le stockage local
+        function saveDataToLocalStorage() {
+            // Sauvegarder les chambres
+            localStorage.setItem('chambres', JSON.stringify(chambres));
             
-            if (password !== "M+R") {
-                alert("Mot de passe incorrect");
-                return;
+            // Sauvegarder les réservations
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+        }
+        
+        // Fonction pour charger les données depuis le stockage local
+        function loadDataFromLocalStorage() {
+            // Charger les chambres
+            const savedChambres = localStorage.getItem('chambres');
+            if (savedChambres) {
+                chambres = JSON.parse(savedChambres);
+            } else {
+                // Initialiser avec les données par défaut si aucune donnée n'est trouvée
+                chambres = dbChambresInitiales.map(room => new Chambre(room.roomNumber, room.bedType, room.capacity));
+                saveDataToLocalStorage();
             }
             
+            // Charger les réservations
+            const savedReservations = localStorage.getItem('reservations');
+            if (savedReservations) {
+                reservations = JSON.parse(savedReservations);
+            }
+        }
+        
+        // Fonction pour afficher le tableau de bord administrateur
+        function afficherTableauBordAdmin() {
+            const tbody = roomsTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            chambres.forEach(chambre => {
+                const tr = document.createElement('tr');
+                
+                // Statut avec couleur
+                const statusClass = chambre.disponibilite ? 'status-available' : 'status-reserved';
+                const statusText = chambre.disponibilite ? 'Disponible' : 'Réservée';
+                
+                // Informations sur le réservateur (si la chambre est réservée)
+                let reservedBy = '-';
+                if (!chambre.disponibilite && chambre.reservePar) {
+                    reservedBy = `${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email})`;
+                }
+                
+                tr.innerHTML = `
+                    <td>${chambre.roomNumber}</td>
+                    <td>${chambre.bedType}</td>
+                    <td>${chambre.capacity}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${reservedBy}</td>
+                    <td>
+                        ${!chambre.disponibilite ? 
+                            `<button class="reset-btn reset-room-btn" data-room="${chambre.roomNumber}">Réinitialiser</button>` : 
+                            '-'}
+                    </td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            // Ajouter des écouteurs d'événements pour les boutons de réinitialisation
+            document.querySelectorAll('.reset-room-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const roomNumber = parseInt(this.dataset.room);
+                    ouvrirModalResetRoom(roomNumber);
+                });
+            });
+        }
+        
+        // Fonction pour ouvrir la modal de réinitialisation de chambre
+        function ouvrirModalResetRoom(roomNumber) {
+            roomToReset = roomNumber;
+            resetRoomNumber.textContent = roomNumber;
+            resetRoomModal.style.display = 'block';
+        }
+        
+        // Fonction pour réinitialiser une chambre
+        function resetRoom(roomNumber) {
+            // Trouver la chambre dans la liste
+            const chambre = chambres.find(c => c.roomNumber === roomNumber);
+            if (chambre) {
+                // Réinitialiser les données de la chambre
+                chambre.reservePar = null;
+                chambre.autresOccupants = [];
+                chambre.disponibilite = true;
+                
+                // Supprimer la réservation associée
+                const reservationIndex = reservations.findIndex(r => r.chambre.roomNumber === roomNumber);
+                if (reservationIndex !== -1) {
+                    reservations.splice(reservationIndex, 1);
+                }
+                
+                // Sauvegarder les changements
+                saveDataToLocalStorage();
+                
+                // Mettre à jour l'affichage
+                afficherTableauBordAdmin();
+            }
+        }
+        
+        // Fonction pour exporter les données
+        function exportData() {
             // Préparer les données pour l'export
             const exportData = reservations.map(reservation => {
                 return {
                     chambre: reservation.chambre.roomNumber,
                     typeLit: reservation.chambre.bedType,
                     capacite: reservation.chambre.capacity,
-                    reservePar: `${reservation.utilisateur.prenom} ${reservation.utilisateur.nom}`,
-                    email: reservation.utilisateur.email,
-                    autresOccupants: reservation.chambre.autresOccupants,
-                    dateReservation: new Date(reservation.dateReservation).toLocaleString()
+                    reservePar: reservation.utilisateur ? `${reservation.utilisateur.prenom} ${reservation.utilisateur.nom}` : 'N/A',
+                    email: reservation.utilisateur ? reservation.utilisateur.email : 'N/A',
+                    autresOccupants: reservation.chambre.autresOccupants ? reservation.chambre.autresOccupants.join('; ') : 'N/A',
+                    dateReservation: reservation.dateReservation ? new Date(reservation.dateReservation).toLocaleString() : 'N/A'
                 };
             });
             
@@ -497,7 +773,7 @@
             let csv = 'Chambre,Type de lit,Capacité,Réservé par,Email,Autres occupants,Date de réservation\n';
             
             exportData.forEach(data => {
-                csv += `${data.chambre},${data.typeLit},${data.capacite},"${data.reservePar}","${data.email}","${data.autresOccupants.join('; ')}","${data.dateReservation}"\n`;
+                csv += `${data.chambre},${data.typeLit},${data.capacite},"${data.reservePar}","${data.email}","${data.autresOccupants}","${data.dateReservation}"\n`;
             });
             
             // Télécharger le fichier
