@@ -205,6 +205,12 @@
     <div class="container">
         <h1>Réservation de Chambre - Mariage</h1>
         
+        <!-- Message d'initialisation -->
+        <div id="initMessage" class="hidden" style="text-align: center; margin: 20px 0; padding: 10px; background-color: #e9f7ef; border-radius: 5px;">
+            <p>Initialisation de la base de données en cours...</p>
+            <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; margin: 10px auto; animation: spin 2s linear infinite;"></div>
+        </div>
+        
         <div id="userSection" class="user-form">
             <h2>Vos informations</h2>
             <div class="form-group">
@@ -446,6 +452,8 @@
         // Fonction pour charger les données depuis Firestore
         async function loadData() {
             try {
+                let chambresTrouvees = false;
+                
                 // Vérifier si nous utilisons la version module ou compat
                 if (typeof firebase !== 'undefined' && firebase.firestore) {
                     // Version compat
@@ -458,12 +466,7 @@
                             chambres.push(doc.data());
                         });
                         console.log("Rooms loaded from Firestore (compat):", chambres.length);
-                    } else {
-                        console.log("No rooms found, initializing from default data (compat)");
-                        chambres = dbChambresInitiales.map(room => 
-                            new Chambre(room.roomNumber, room.bedType, room.capacity)
-                        );
-                        await saveData();
+                        chambresTrouvees = true;
                     }
                 } else {
                     // Version module
@@ -471,20 +474,31 @@
                     const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
                     
                     const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                    const docsArray = [];
+                    querySnapshot.forEach((doc) => {
+                        docsArray.push(doc.data());
+                    });
                     
-                    if (!querySnapshot.empty) {
-                        chambres = [];
-                        querySnapshot.forEach((doc) => {
-                            chambres.push(doc.data());
-                        });
+                    if (docsArray.length > 0) {
+                        chambres = docsArray;
                         console.log("Rooms loaded from Firestore (module):", chambres.length);
-                    } else {
-                        console.log("No rooms found, initializing from default data (module)");
-                        chambres = dbChambresInitiales.map(room => 
-                            new Chambre(room.roomNumber, room.bedType, room.capacity)
-                        );
-                        await saveData();
+                        chambresTrouvees = true;
                     }
+                }
+                
+                // Si aucune chambre n'a été trouvée, initialiser avec les données par défaut
+                if (!chambresTrouvees) {
+                    console.log("No rooms found, initializing from default data");
+                    chambres = [];
+                    // Création d'instances de Chambre à partir des données initiales
+                    dbChambresInitiales.forEach(room => {
+                        chambres.push(new Chambre(room.roomNumber, room.bedType, room.capacity));
+                    });
+                    console.log("Initialized", chambres.length, "rooms from default data");
+                    
+                    // Sauvegarder les chambres initiales dans Firestore
+                    await saveData();
+                    console.log("Initial rooms saved to Firestore");
                 }
                 
                 // Mise à jour de l'interface si nécessaire
@@ -517,51 +531,116 @@
                     // Version compat
                     console.log("Using compat version for data saving");
                     
+                    // Créer un batch pour les opérations groupées
                     const batch = db.batch();
                     
-                    // Récupérer tous les documents existants
-                    const querySnapshot = await db.collection("chambres").get();
-                    
-                    // Supprimer tous les documents existants
-                    querySnapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    
-                    // Ajouter toutes les chambres actuelles
-                    chambres.forEach((chambre) => {
-                        const docRef = db.collection("chambres").doc(chambre.roomNumber.toString());
-                        batch.set(docRef, chambre);
-                    });
-                    
-                    // Exécuter le batch
-                    await batch.commit();
-                    console.log("Database updated successfully (compat)");
-                    
+                    try {
+                        // Récupérer tous les documents existants
+                        const querySnapshot = await db.collection("chambres").get();
+                        
+                        // Supprimer tous les documents existants
+                        querySnapshot.forEach((doc) => {
+                            batch.delete(doc.ref);
+                        });
+                        
+                        // Ajouter toutes les chambres actuelles
+                        chambres.forEach((chambre) => {
+                            const docRef = db.collection("chambres").doc(chambre.roomNumber.toString());
+                            
+                            // Assurez-vous que toutes les propriétés de l'objet sont sérialisables
+                            const chambreData = {
+                                roomNumber: chambre.roomNumber,
+                                bedType: chambre.bedType,
+                                capacity: chambre.capacity,
+                                disponibilite: chambre.disponibilite,
+                                autresOccupants: chambre.autresOccupants || [],
+                                reservePar: chambre.reservePar || null
+                            };
+                            
+                            batch.set(docRef, chambreData);
+                        });
+                        
+                        // Exécuter le batch
+                        await batch.commit();
+                        console.log("Database updated successfully (compat)");
+                    } catch (error) {
+                        console.error("Error in batch operations:", error);
+                        
+                        // Essayer d'écrire un par un si le batch échoue
+                        console.log("Trying individual writes instead...");
+                        for (const chambre of chambres) {
+                            const chambreData = {
+                                roomNumber: chambre.roomNumber,
+                                bedType: chambre.bedType,
+                                capacity: chambre.capacity,
+                                disponibilite: chambre.disponibilite,
+                                autresOccupants: chambre.autresOccupants || [],
+                                reservePar: chambre.reservePar || null
+                            };
+                            
+                            await db.collection("chambres").doc(chambre.roomNumber.toString()).set(chambreData);
+                        }
+                        console.log("Individual writes completed");
+                    }
                 } else {
                     // Version module
                     console.log("Using module version for data saving");
                     const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
                     
-                    // Créer une transaction pour mettre à jour la base de données
-                    const batch = firestore.writeBatch(db);
-                    
-                    // Récupérer tous les documents existants
-                    const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
-                    
-                    // Supprimer tous les documents existants
-                    querySnapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    
-                    // Ajouter toutes les chambres actuelles
-                    chambres.forEach((chambre) => {
-                        const docRef = firestore.doc(db, "chambres", chambre.roomNumber.toString());
-                        batch.set(docRef, chambre);
-                    });
-                    
-                    // Exécuter le batch
-                    await batch.commit();
-                    console.log("Database updated successfully (module)");
+                    try {
+                        // Créer une transaction pour mettre à jour la base de données
+                        const batch = firestore.writeBatch(db);
+                        
+                        // Récupérer tous les documents existants
+                        const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                        
+                        // Supprimer tous les documents existants
+                        querySnapshot.forEach((doc) => {
+                            batch.delete(doc.ref);
+                        });
+                        
+                        // Ajouter toutes les chambres actuelles
+                        chambres.forEach((chambre) => {
+                            const docRef = firestore.doc(db, "chambres", chambre.roomNumber.toString());
+                            
+                            // Assurez-vous que toutes les propriétés de l'objet sont sérialisables
+                            const chambreData = {
+                                roomNumber: chambre.roomNumber,
+                                bedType: chambre.bedType,
+                                capacity: chambre.capacity,
+                                disponibilite: chambre.disponibilite,
+                                autresOccupants: chambre.autresOccupants || [],
+                                reservePar: chambre.reservePar || null
+                            };
+                            
+                            batch.set(docRef, chambreData);
+                        });
+                        
+                        // Exécuter le batch
+                        await batch.commit();
+                        console.log("Database updated successfully (module)");
+                    } catch (error) {
+                        console.error("Error in batch operations:", error);
+                        
+                        // Essayer d'écrire un par un si le batch échoue
+                        console.log("Trying individual writes instead...");
+                        for (const chambre of chambres) {
+                            const chambreData = {
+                                roomNumber: chambre.roomNumber,
+                                bedType: chambre.bedType,
+                                capacity: chambre.capacity,
+                                disponibilite: chambre.disponibilite,
+                                autresOccupants: chambre.autresOccupants || [],
+                                reservePar: chambre.reservePar || null
+                            };
+                            
+                            await firestore.setDoc(
+                                firestore.doc(db, "chambres", chambre.roomNumber.toString()), 
+                                chambreData
+                            );
+                        }
+                        console.log("Individual writes completed");
+                    }
                 }
                 
             } catch (error) {
@@ -923,12 +1002,55 @@
             }
         }
 
-        // Initialize the application
+        // Fonction pour forcer l'initialisation de la base de données
+        async function forceInitDatabase() {
+            try {
+                // Afficher le message d'initialisation
+                document.getElementById('initMessage').classList.remove('hidden');
+                document.getElementById('userSection').classList.add('hidden');
+                
+                console.log("Forcing database initialization...");
+                
+                // Créer des instances de Chambre à partir des données initiales
+                chambres = dbChambresInitiales.map(room => 
+                    new Chambre(room.roomNumber, room.bedType, room.capacity)
+                );
+                
+                console.log("Created", chambres.length, "rooms from default data");
+                
+                // Sauvegarder dans Firestore
+                await saveData();
+                
+                console.log("Database initialized successfully");
+                
+                // Masquer le message d'initialisation et afficher le formulaire
+                document.getElementById('initMessage').classList.add('hidden');
+                document.getElementById('userSection').classList.remove('hidden');
+                
+                alert("Base de données initialisée avec succès avec " + chambres.length + " chambres.");
+                
+            } catch (error) {
+                console.error("Error initializing database:", error);
+                alert("Erreur lors de l'initialisation de la base de données: " + error.message);
+                
+                // En cas d'erreur, masquer le message et afficher le formulaire
+                document.getElementById('initMessage').classList.add('hidden');
+                document.getElementById('userSection').classList.remove('hidden');
+            }
+        }
+
+        // Initialise l'application
         function initApp() {
             showLoading();
             
-            // Initialize Firebase
+            // Initialiser Firebase
             initFirebase();
+            
+            // Vérifier s'il faut forcer l'initialisation
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('init') && urlParams.get('init') === 'true') {
+                forceInitDatabase();
+            }
             
             // User info form
             document.getElementById('userInfoBtn').addEventListener('click', function() {
@@ -971,7 +1093,7 @@
                 }
             });
             
-            // Refresh data button (for testing)
+            // Refresh data button
             const refreshButton = document.createElement('button');
             refreshButton.innerText = 'Actualiser les données';
             refreshButton.style.position = 'fixed';
@@ -980,6 +1102,16 @@
             refreshButton.style.zIndex = '1000';
             refreshButton.addEventListener('click', loadData);
             document.body.appendChild(refreshButton);
+            
+            // Init database button (admin use)
+            const initButton = document.createElement('button');
+            initButton.innerText = 'Initialiser la base de données';
+            initButton.style.position = 'fixed';
+            initButton.style.bottom = '50px';
+            initButton.style.right = '10px';
+            initButton.style.zIndex = '1000';
+            initButton.addEventListener('click', forceInitDatabase);
+            document.body.appendChild(initButton);
             
             // Hide loading once Firebase is initialized
             setTimeout(hideLoading, 3000); // Give it a few seconds to initialize Firebase
