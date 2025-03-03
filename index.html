@@ -4,175 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Réservation de Chambre - Mariage</title>
-    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💍</text></svg>" type="image/svg+xml">
-    
     <style>
+        /* Styles simplifiés */
         body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f8f4e9; /* Fond crème automnal */
-            color: #5d4037; /* Marron foncé pour le texte */
+            background-color: #f8f4e9;
+            color: #5d4037;
         }
-        
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background-color: #fff9e6; /* Fond beige clair */
+            background-color: #fff9e6;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(121, 85, 72, 0.2);
-            border-left: 4px solid #d7a367; /* Bordure dorée */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        h1, h2 {
-            color: #a04b2d; /* Rouge-brun automnal */
-            text-align: center;
-        }
-        
-        .user-form {
-            margin-bottom: 30px;
-            padding: 15px;
-            background-color: rgba(222, 184, 135, 0.1); /* Beige transparent */
-            border-radius: 4px;
-            border-left: 3px solid #c68642; /* Brun doré */
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #7d5a44; /* Brun moyen */
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #d9b78c; /* Beige doré */
-            border-radius: 4px;
-            box-sizing: border-box;
-            background-color: #fff9f0; /* Blanc légèrement chaud */
-        }
-        
+        .hidden { display: none; }
         button {
-            background-color: #b26b46; /* Orange-brun */
+            background-color: #b26b46;
             color: white;
             border: none;
             padding: 10px 15px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
-        
-        button:hover {
-            background-color: #99512e; /* Plus foncé au survol */
-        }
-        
-        button:disabled {
-            background-color: #d5c5b5; /* Beige grisé */
-            cursor: not-allowed;
-        }
-
-        .room-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .room-card {
-            border: 1px solid #d9b78c;
-            border-radius: 4px;
-            padding: 15px;
-            background-color: #fff9e6;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .room-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(121, 85, 72, 0.3);
-        }
-        
-        .room-card.selected {
-            border: 2px solid #c68642;
-            background-color: rgba(214, 184, 147, 0.2);
-        }
-        
-        .room-info {
-            margin-bottom: 10px;
-            color: #5d4037;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .guests-form {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: rgba(222, 184, 135, 0.1);
-            border-radius: 4px;
-            border-left: 3px solid #c68642;
-        }
-        
-        .success-message {
-            background-color: #e8f1d5; /* Vert automnal très clair */
-            color: #4c6228; /* Vert forêt */
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-            text-align: center;
-            border-left: 3px solid #6c8542; /* Vert olive */
-        }
-        
-        .error-message {
-            background-color: #f6dfd1; /* Pêche clair */
-            color: #a04b2d; /* Rouge-brun */
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-            text-align: center;
-            border-left: 3px solid #a04b2d;
-        }
-        
-        .admin-table {
+        input {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .admin-table th, .admin-table td {
-            border: 1px solid #d9b78c;
             padding: 8px;
-            text-align: left;
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
-        
-        .admin-table th {
-            background-color: #e6d7c0; /* Beige moyen */
-            color: #7d5a44;
-        }
-        
-        .admin-table tr:nth-child(even) {
-            background-color: rgba(222, 184, 135, 0.1);
-        }
-        .admin-buttons {
-            margin: 20px 0;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .admin-buttons button {
-            flex: 1;
-            min-width: 150px;
-        }
-        
         .modal {
             display: none;
             position: fixed;
@@ -181,1192 +44,119 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(77, 54, 41, 0.4); /* Fond brun transparent */
+            background-color: rgba(0,0,0,0.4);
         }
-        
         .modal-content {
-            background-color: #fff9e6;
+            background-color: white;
             margin: 15% auto;
             padding: 20px;
-            border: 1px solid #c68642;
             width: 300px;
-            border-radius: 5px;
-            box-shadow: 0 4px 12px rgba(121, 85, 72, 0.4);
-        }
-        
-        .close {
-            color: #a04b2d;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: #823c22;
-        }
-        
-        .admin-link {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 14px;
-        }
-        
-        .admin-link a {
-            color: #a04b2d;
-            text-decoration: none;
-            border-bottom: 1px dotted #a04b2d;
-        }
-        
-        .admin-link a:hover {
-            color: #823c22;
-            border-bottom: 1px solid #823c22;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(248, 244, 233, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        
-        .spinner {
-            border: 16px solid #e6d7c0;
-            border-top: 16px solid #b26b46;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            animation: spin 2s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .reset-room-btn {
-            background-color: #d05c46; /* Rouge-orange plus vif */
-        }
-        
-        .reset-room-btn:hover {
-            background-color: #b24c37;
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #7d5a44;
-            font-size: 14px;
-            padding-top: 10px;
-            border-top: 1px solid #d9b78c;
-        }
-        
-        .reservation-summary {
-            background-color: #fff9f0;
-            border: 1px solid #d9b78c;
-            border-radius: 4px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        
-        /* Styles pour l'impression */
-        @media print {
-            body {
-                background-color: white;
-                color: black;
-                margin: 0;
-                padding: 0;
-            }
-            
-            .container {
-                box-shadow: none;
-                border: none;
-                width: 100%;
-                max-width: 100%;
-                padding: 10px;
-            }
-            
-            button, .admin-link, .footer, #newReservationBtn, #printConfirmationBtn {
-                display: none;
-            }
-            
-            .success-message {
-                background-color: white;
-                border: 1px solid #333;
-                color: black;
-            }
-            
-            .reservation-summary {
-                border: 1px solid #333;
-                background-color: white;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- Container principal -->
     <div class="container" id="mainContainer">
         <h1>Réservation de Chambre - Mariage</h1>
         
-        <!-- Message d'initialisation -->
-        <div id="initMessage" class="hidden" style="text-align: center; margin: 20px 0; padding: 10px; background-color: #e9f7ef; border-radius: 5px;">
-            <p>Initialisation de la base de données en cours...</p>
-            <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; margin: 10px auto; animation: spin 2s linear infinite;"></div>
-        </div>
-
-        <div id="userSection" class="user-form">
+        <div id="userSection">
             <h2>Vos informations</h2>
-            <div class="form-group">
-                <label for="firstName">Prénom:</label>
-                <input type="text" id="firstName" required>
-            </div>
-            <div class="form-group">
-                <label for="lastName">Nom:</label>
-                <input type="text" id="lastName" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" required>
-            </div>
-            <button id="userInfoBtn">Continuer</button>
+            <label for="firstName">Prénom:</label>
+            <input type="text" id="firstName" required>
+            
+            <label for="lastName">Nom:</label>
+            <input type="text" id="lastName" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+            
+            <button onclick="continuer()">Continuer</button>
         </div>
         
         <div id="roomSection" class="hidden">
-            <h2>Sélectionnez votre chambre</h2>
-            <div id="roomList" class="room-list"></div>
-            
-            <div id="guestsSection" class="guests-form hidden">
-                <h3>Autres occupants</h3>
-                <div id="guestsFormFields"></div>
-                <button id="validateRoomBtn" disabled>Valider la réservation</button>
-            </div>
+            <h2>Sélection de chambre</h2>
+            <p>Chargement des chambres...</p>
         </div>
         
-        <div id="confirmationSection" class="hidden">
-            <h2>Confirmation de réservation</h2>
-            <div id="reservationDetails"></div>
-        </div>
-        
-        <div class="admin-link">
-            <a href="#" id="adminLink">Administration</a>
-        </div>
-        
-        <div class="footer">
-            <p>Système de réservation pour le mariage | 2025</p>
+        <div style="margin-top: 20px;">
+            <a href="#" onclick="showAdminModal(); return false;">Administration</a>
         </div>
     </div>
     
-    <!-- Modal for admin login -->
     <div id="adminModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
             <h3>Accès administrateur</h3>
-            <div class="form-group">
-                <label for="adminPassword">Mot de passe:</label>
-                <input type="password" id="adminPassword">
-            </div>
-            <button id="adminLoginBtn">Connexion</button>
+            <label for="adminPassword">Mot de passe:</label>
+            <input type="password" id="adminPassword">
+            <button onclick="loginAdmin()">Connexion</button>
         </div>
     </div>
     
-    <!-- Admin section -->
     <div id="adminSection" class="container hidden">
-        <h1>Administration des réservations</h1>
-        
-        <div class="admin-buttons">
-            <button id="exportBtn">Exporter les données (CSV)</button>
-            <button id="initDatabaseBtn" class="reset-room-btn">Initialiser la base de données</button>
-            <button id="backToMainBtn">Retour à la page principale</button>
-        </div>
-        
-        <div id="adminRoomList">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>N° Chambre</th>
-                        <th>Type de lit</th>
-                        <th>Capacité</th>
-                        <th>Disponibilité</th>
-                        <th>Réservé par</th>
-                        <th>Autres occupants</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="adminRoomTable"></tbody>
-            </table>
-        </div>
-        
-        <div class="footer">
-            Système de gestion de réservation pour mariage
-        </div>
+        <h1>Administration</h1>
+        <p>Section admin</p>
+        <button onclick="backToMain()">Retour</button>
     </div>
 
     <script>
-        // Classes
-        class Utilisateur {
-            constructor(nom, prenom, email) {
-                this.nom = nom;
-                this.prenom = prenom;
-                this.email = email;
-            }
-        }
-        
-        class Chambre {
-            constructor(roomNumber, bedType, capacity) {
-                this.roomNumber = roomNumber;
-                this.bedType = bedType;
-                this.capacity = capacity;
-                this.reservePar = null;
-                this.autresOccupants = [];
-                this.disponibilite = true;
-            }
-        }
-        
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyB9VYqm_OBfrepPMWgo7dKGlpWsrl0zCUU",
-            authDomain: "formmariage.firebaseapp.com",
-            projectId: "formmariage",
-            storageBucket: "formmariage.firebasestorage.app",
-            messagingSenderId: "1028876338505",
-            appId: "1:1028876338505:web:dc28ba621ef95539a78698"
-        };
-
-        // Database initialization
-        const dbChambresInitiales = [
-            { roomNumber: 11, bedType: "Double", capacity: 2 },
-            { roomNumber: 12, bedType: "Double", capacity: 2 },
-            { roomNumber: 14, bedType: "Double", capacity: 2 },
-            { roomNumber: 15, bedType: "Double", capacity: 2 },
-            { roomNumber: 16, bedType: "Double", capacity: 2 },
-            { roomNumber: 21, bedType: "Double", capacity: 2 },
-            { roomNumber: 22, bedType: "Double", capacity: 2 },
-            { roomNumber: 36, bedType: "Double", capacity: 2 },
-            { roomNumber: 38, bedType: "Avec 3 lits séparés", capacity: 3 },
-            { roomNumber: 39, bedType: "Twin", capacity: 2 },
-            { roomNumber: 40, bedType: "Twin", capacity: 2 },
-            { roomNumber: 41, bedType: "Double", capacity: 2 },
-            { roomNumber: 42, bedType: "Double", capacity: 2 },
-            { roomNumber: 44, bedType: "Avec 3 lits séparés", capacity: 3 },
-            { roomNumber: 45, bedType: "Double", capacity: 2 },
-            { roomNumber: 46, bedType: "Double", capacity: 2 },
-            { roomNumber: 48, bedType: "Avec 3 lits séparés", capacity: 3 },
-            { roomNumber: 50, bedType: "Avec 5 lits séparés", capacity: 5 }
-        ];
-        
-        // Application state
-        let currentUser = null;
-        let selectedRoom = null;
-        let chambres = [];
-        let db;
-
-        // Show loading indicator
-        function showLoading() {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'loadingIndicator';
-            loadingDiv.className = 'loading-overlay';
-            
-            const spinner = document.createElement('div');
-            spinner.className = 'spinner';
-            
-            loadingDiv.appendChild(spinner);
-            document.body.appendChild(loadingDiv);
-        }
-        
-        function hideLoading() {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) {
-                loadingIndicator.remove();
-            }
-        }
-
-        // Initialiser Firebase
-        async function initFirebase() {
-            try {
-                console.log("Initialisation de Firebase...");
-                
-                try {
-                    // Initialisation avec import dynamique
-                    const firebaseApp = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js');
-                    const firebaseFirestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
-                    
-                    // Initialiser l'application
-                    const app = firebaseApp.initializeApp(firebaseConfig);
-                    db = firebaseFirestore.getFirestore(app);
-                    
-                    console.log("Firebase initialized successfully (module version)");
-                    await loadData();
-                } catch (error) {
-                    console.error("Error initializing Firebase module version:", error);
-                    
-                    // Fallback vers la version compat
-                    console.log("Trying compat version as fallback...");
-                    try {
-                        // Charger les scripts compat
-                        await new Promise((resolve, reject) => {
-                            const compatAppScript = document.createElement('script');
-                            compatAppScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js';
-                            compatAppScript.onerror = reject;
-                            
-                            const compatFirestoreScript = document.createElement('script');
-                            compatFirestoreScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js';
-                            compatFirestoreScript.onerror = reject;
-                            
-                            compatAppScript.onload = () => {
-                                document.head.appendChild(compatFirestoreScript);
-                                compatFirestoreScript.onload = resolve;
-                            };
-                            
-                            document.head.appendChild(compatAppScript);
-                        });
-                        
-                        // Initialiser avec la version compat
-                        firebase.initializeApp(firebaseConfig);
-                        db = firebase.firestore();
-                        console.log("Firebase initialized successfully (compat version)");
-                        await loadData();
-                    } catch (compatError) {
-                        console.error("Error with compat version:", compatError);
-                        throw new Error("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
-                    }
-                }
-            } catch (mainError) {
-                console.error("Fatal error initializing Firebase:", mainError);
-                alert("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
-                
-                // Fallback vers localStorage
-                console.log("Using localStorage as final fallback");
-                loadLocalData();
-            } finally {
-                // Toujours masquer le chargement, quelle que soit l'issue
-                hideLoading();
-            }
-        }
-
-        // Charger depuis localStorage (fallback)
-        function loadLocalData() {
-            const savedChambres = localStorage.getItem('chambres');
-            if (savedChambres) {
-                chambres = JSON.parse(savedChambres);
-            } else {
-                chambres = dbChambresInitiales.map(room => 
-                    new Chambre(room.roomNumber, room.bedType, room.capacity)
-                );
-                localStorage.setItem('chambres', JSON.stringify(chambres));
-            }
-            
-            // Mettre à jour l'interface si nécessaire
-            if (document.getElementById('roomList').innerHTML !== '') {
-                afficherChambresDisponibles();
-            }
-            if (document.getElementById('adminRoomTable').innerHTML !== '') {
-                loadAdminRoomTable();
-            }
-            
-            // Cacher l'indicateur de chargement
-            hideLoading();
-        }
-
-        // Fonction pour charger les données depuis Firestore
-        async function loadData() {
-            try {
-                let chambresTrouvees = false;
-                
-                // Vérifier si nous utilisons la version module ou compat
-                if (typeof firebase !== 'undefined' && firebase.firestore) {
-                    // Version compat
-                    console.log("Using compat version for data loading");
-                    try {
-                        const querySnapshot = await db.collection("chambres").get();
-                        
-                        if (querySnapshot.size > 0) {
-                            chambres = [];
-                            querySnapshot.forEach((doc) => {
-                                chambres.push(doc.data());
-                            });
-                            console.log("Rooms loaded from Firestore (compat):", chambres.length);
-                            chambresTrouvees = true;
-                        }
-                    } catch (error) {
-                        console.error("Error loading data with compat version:", error);
-                        throw error; // Relancer pour le traitement d'erreur
-                    }
-                } else {
-                    // Version module
-                    console.log("Using module version for data loading");
-                    try {
-                        const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
-                        
-                        const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
-                        const docsArray = [];
-                        querySnapshot.forEach((doc) => {
-                            docsArray.push(doc.data());
-                        });
-                        
-                        if (docsArray.length > 0) {
-                            chambres = docsArray;
-                            console.log("Rooms loaded from Firestore (module):", chambres.length);
-                            chambresTrouvees = true;
-                        }
-                    } catch (error) {
-                        console.error("Error loading data with module version:", error);
-                        throw error; // Relancer pour le traitement d'erreur
-                    }
-                }
-                
-                // Si aucune chambre n'a été trouvée, initialiser avec les données par défaut
-                if (!chambresTrouvees) {
-                    console.log("No rooms found, initializing from default data");
-                    chambres = [];
-                    // Création d'instances de Chambre à partir des données initiales
-                    dbChambresInitiales.forEach(room => {
-                        chambres.push(new Chambre(room.roomNumber, room.bedType, room.capacity));
-                    });
-                    console.log("Initialized", chambres.length, "rooms from default data");
-                    
-                    // Sauvegarder les chambres initiales dans Firestore
-                    try {
-                        await saveData();
-                        console.log("Initial rooms saved to Firestore");
-                    } catch (saveError) {
-                        console.error("Error saving initial data:", saveError);
-                        // On continue malgré l'erreur de sauvegarde initiale
-                    }
-                }
-                
-                // Mise à jour de l'interface si nécessaire
-                if (document.getElementById('roomList') && document.getElementById('roomList').innerHTML !== '') {
-                    afficherChambresDisponibles();
-                }
-                if (document.getElementById('adminRoomTable') && document.getElementById('adminRoomTable').innerHTML !== '') {
-                    loadAdminRoomTable();
-                }
-                
-                // Cacher l'indicateur de chargement
-                hideLoading();
-                
-                return true;
-                
-            } catch (error) {
-                console.error("Error loading rooms:", error);
-                
-                // Fallback vers localStorage
-                loadLocalData();
-                return false;
-            }
-        }
-
-        // Fonction pour sauvegarder les données dans Firestore
-        async function saveData() {
-            // D'abord, sauvegarder dans localStorage comme backup
-            localStorage.setItem('chambres', JSON.stringify(chambres));
-            
-            try {
-                showLoading(); // Afficher l'indicateur de chargement pendant la sauvegarde
-                
-                // Vérifier si nous utilisons la version module ou compat
-                if (typeof firebase !== 'undefined' && firebase.firestore) {
-                    // Version compat
-                    console.log("Using compat version for data saving");
-                    
-                    try {
-                        // Approche alternative: supprimer puis recréer la collection entière
-                        const collectionRef = db.collection("chambres");
-                        
-                        // Récupérer tous les documents existants
-                        const querySnapshot = await collectionRef.get();
-                        
-                        // Supprimer tous les documents un par un
-                        const deletePromises = [];
-                        querySnapshot.forEach((doc) => {
-                            deletePromises.push(doc.ref.delete());
-                        });
-                        
-                        // Attendre que toutes les suppressions soient terminées
-                        await Promise.all(deletePromises);
-                        console.log("All existing documents deleted");
-                        
-                        // Ajouter toutes les chambres une par une
-                        const addPromises = [];
-                        chambres.forEach((chambre) => {
-                            // Créer un objet de données propre
-                            const chambreData = {
-                                roomNumber: chambre.roomNumber,
-                                bedType: chambre.bedType,
-                                capacity: chambre.capacity,
-                                disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || []
-                            };
-                            
-                            // Traiter reservePar spécialement pour éviter les problèmes de sérialisation
-                            if (chambre.reservePar) {
-                                chambreData.reservePar = {
-                                    nom: chambre.reservePar.nom,
-                                    prenom: chambre.reservePar.prenom,
-                                    email: chambre.reservePar.email
-                                };
-                            } else {
-                                chambreData.reservePar = null;
-                            }
-                            
-                            // Ajouter le document à Firestore
-                            addPromises.push(
-                                collectionRef.doc(chambre.roomNumber.toString()).set(chambreData)
-                            );
-                        });
-                        
-                        // Attendre que toutes les ajouts soient terminés
-                        await Promise.all(addPromises);
-                        console.log("All new documents added successfully");
-                        
-                        hideLoading(); // Cacher l'indicateur une fois terminé
-                    } catch (error) {
-                        console.error("Error in Firestore operations:", error);
-                        hideLoading();
-                        throw error; // Relancer l'erreur pour le gestionnaire d'erreurs principal
-                    }
-                } else {
-                    // Version module
-                    console.log("Using module version for data saving");
-                    const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
-                    
-                    try {
-                        // Récupérer tous les documents existants
-                        const collectionRef = firestore.collection(db, "chambres");
-                        const querySnapshot = await firestore.getDocs(collectionRef);
-                        
-                        // Supprimer tous les documents un par un
-                        const deletePromises = [];
-                        querySnapshot.forEach((doc) => {
-                            deletePromises.push(firestore.deleteDoc(doc.ref));
-                        });
-                        
-                        // Attendre que toutes les suppressions soient terminées
-                        await Promise.all(deletePromises);
-                        console.log("All existing documents deleted (module version)");
-                        
-                        // Ajouter toutes les chambres une par une
-                        const addPromises = [];
-                        chambres.forEach((chambre) => {
-                            // Créer un objet de données propre
-                            const chambreData = {
-                                roomNumber: chambre.roomNumber,
-                                bedType: chambre.bedType,
-                                capacity: chambre.capacity,
-                                disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || []
-                            };
-                            
-                            // Traiter reservePar spécialement
-                            if (chambre.reservePar) {
-                                chambreData.reservePar = {
-                                    nom: chambre.reservePar.nom,
-                                    prenom: chambre.reservePar.prenom,
-                                    email: chambre.reservePar.email
-                                };
-                            } else {
-                                chambreData.reservePar = null;
-                            }
-                            
-                            // Ajouter le document à Firestore
-                            addPromises.push(
-                                firestore.setDoc(
-                                    firestore.doc(db, "chambres", chambre.roomNumber.toString()), 
-                                    chambreData
-                                )
-                            );
-                        });
-                        
-                        // Attendre que toutes les ajouts soient terminés
-                        await Promise.all(addPromises);
-                        console.log("All new documents added successfully (module version)");
-                        
-                        hideLoading(); // Cacher l'indicateur une fois terminé
-                    } catch (error) {
-                        console.error("Error in Firestore operations (module):", error);
-                        hideLoading();
-                        throw error; // Relancer l'erreur pour le gest
-
-
-                    // Attendre que toutes les ajouts soient terminés
-                        await Promise.all(addPromises);
-                        console.log("All new documents added successfully (module version)");
-                        
-                        hideLoading(); // Cacher l'indicateur une fois terminé
-                    } catch (error) {
-                        console.error("Error in Firestore operations (module):", error);
-                        hideLoading();
-                        throw error; // Relancer l'erreur pour le gestionnaire d'erreurs principal
-                    }
-                }
-                
-                return true; // Succès
-            } catch (error) {
-                console.error("Error updating database:", error);
-                hideLoading();
-                alert("Erreur lors de la mise à jour de la base de données. Les données ont été sauvegardées localement.");
-                return false; // Échec
-            }
-        }
-        
-        // Fonction pour enregistrer les détails de la réservation (sans envoi d'email)
-        function enregistrerReservation(chambre) {
-            console.log(`Réservation enregistrée pour ${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email}) - Chambre ${chambre.roomNumber}`);
-            return true;
-        }
-        
-        // Function to create a new user
-        function saisieNouvelUtilisateur() {
+        // Fonctions simplifiées
+        function continuer() {
+            console.log("Bouton continuer cliqué");
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
             
-            if (!firstName || !lastName || !email) {
-                alert('Veuillez remplir tous les champs.');
-                return false;
-            }
-            
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                alert('Veuillez entrer un email valide.');
-                return false;
-            }
-            
-            currentUser = new Utilisateur(lastName, firstName, email);
-            return true;
-        }
-        
-        // Function to display available rooms
-        function afficherChambresDisponibles() {
-            const roomList = document.getElementById('roomList');
-            roomList.innerHTML = '';
-            
-            const chambresDisponibles = chambres.filter(chambre => chambre.disponibilite);
-            
-            if (chambresDisponibles.length === 0) {
-                roomList.innerHTML = '<p>Aucune chambre disponible pour le moment.</p>';
+            if(!firstName || !lastName || !email) {
+                alert("Veuillez remplir tous les champs");
                 return;
             }
             
-            chambresDisponibles.forEach(chambre => {
-                const roomCard = document.createElement('div');
-                roomCard.className = 'room-card';
-                roomCard.dataset.roomNumber = chambre.roomNumber;
-                
-                roomCard.innerHTML = `
-                    <div class="room-info">
-                        <strong>Chambre ${chambre.roomNumber}</strong>
-                    </div>
-                    <div class="room-info">
-                        Type de lit: ${chambre.bedType}
-                    </div>
-                    <div class="room-info">
-                        Capacité: ${chambre.capacity} personne(s)
-                    </div>
-                    <button class="select-room-btn">Sélectionner</button>
-                `;
-                
-                roomList.appendChild(roomCard);
-                
-                const selectBtn = roomCard.querySelector('.select-room-btn');
-                selectBtn.addEventListener('click', () => selectionChambre(chambre));
-            });
-        }
-
-        // Function to select a room
-        function selectionChambre(chambre) {
-            // Reset previously selected room
-            document.querySelectorAll('.room-card').forEach(card => {
-                card.classList.remove('selected');
-            });
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('roomSection').classList.remove('hidden');
             
-            // Mark new selected room
-            const roomCard = document.querySelector(`.room-card[data-room-number="${chambre.roomNumber}"]`);
-            if (roomCard) {
-                roomCard.classList.add('selected');
-            }
-            
-            selectedRoom = chambre;
-            
-            // Show guests form
-            document.getElementById('guestsSection').classList.remove('hidden');
-            
-            // Create form fields for additional occupants
-            const guestsFormFields = document.getElementById('guestsFormFields');
-            guestsFormFields.innerHTML = '';
-            
-            // The main occupant (currentUser) is already counted, so we need (capacity - 1) fields
-            const additionalOccupants = Math.max(0, chambre.capacity - 1);
-            
-            if (additionalOccupants === 0) {
-                guestsFormFields.innerHTML = '<p>Aucun autre occupant possible pour cette chambre.</p>';
-                document.getElementById('validateRoomBtn').disabled = false;
-            } else {
-                for (let i = 0; i < additionalOccupants; i++) {
-                    const occupantField = document.createElement('div');
-                    occupantField.className = 'form-group';
-                    occupantField.innerHTML = `
-                        <label for="occupant${i}">Occupant ${i + 2}:</label>
-                        <input type="text" id="occupant${i}" class="occupant-input" required>
-                    `;
-                    guestsFormFields.appendChild(occupantField);
-                }
-                
-                // Add event listeners to check if all fields are filled
-                const occupantInputs = document.querySelectorAll('.occupant-input');
-                occupantInputs.forEach(input => {
-                    input.addEventListener('input', checkOccupantsFields);
-                });
-                
-                // Initially disable the validation button
-                document.getElementById('validateRoomBtn').disabled = true;
-            }
-        }
-        
-        // Function to check if all occupant fields are filled
-        function checkOccupantsFields() {
-            const occupantInputs = document.querySelectorAll('.occupant-input');
-            const allFilled = Array.from(occupantInputs).every(input => input.value.trim() !== '');
-            
-            document.getElementById('validateRoomBtn').disabled = !allFilled;
-        }
-        
-        // Function to validate the room selection and save data
-        async function validerDonnees() {
-            if (!currentUser || !selectedRoom) {
-                alert('Une erreur est survenue. Veuillez recommencer.');
-                return;
-            }
-            
-            showLoading(); // Afficher l'indicateur de chargement
-            
-            try {
-                // Get all other occupants
-                const occupantInputs = document.querySelectorAll('.occupant-input');
-                const autresOccupants = Array.from(occupantInputs).map(input => input.value.trim());
-                
-                // Find the room in the database and update it
-                const roomIndex = chambres.findIndex(chambre => chambre.roomNumber === selectedRoom.roomNumber);
-                if (roomIndex !== -1) {
-                    chambres[roomIndex].reservePar = currentUser;
-                    chambres[roomIndex].autresOccupants = autresOccupants;
-                    chambres[roomIndex].disponibilite = false;
-                    
-                    // Save to Firestore and localStorage
-                    const success = await saveData();
-                    
-                    // Enregistrer les détails de la réservation (pour référence)
-                    enregistrerReservation(chambres[roomIndex]);
-                    
-                    if (success) {
-                        // Show confirmation
-                        afficherConfirmation(chambres[roomIndex]);
-                    } else {
-                        // En cas d'échec de sauvegarde, afficher quand même la confirmation mais avec avertissement
-                        afficherConfirmation(chambres[roomIndex], "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
-                    }
-                } else {
-                    hideLoading();
-                    alert("Erreur: Chambre non trouvée dans la base de données.");
-                }
-            } catch (error) {
-                console.error("Erreur lors de la validation des données:", error);
-                hideLoading();
-                alert("Une erreur est survenue lors de la validation. Veuillez réessayer.");
-            }
-        }
-
-        // Function to display the confirmation
-        function afficherConfirmation(chambre, warningMessage = null) {
-            hideLoading(); // Cacher le loader
-            
-            document.getElementById('roomSection').classList.add('hidden');
-            
-            const confirmationSection = document.getElementById('confirmationSection');
-            confirmationSection.classList.remove('hidden');
-            
-            const reservationDetails = document.getElementById('reservationDetails');
-            
-            let occupantsHtml = '';
-            if (chambre.autresOccupants.length > 0) {
-                occupantsHtml = '<p><strong>Autres occupants:</strong></p><ul>';
-                chambre.autresOccupants.forEach(occupant => {
-                    occupantsHtml += `<li>${occupant}</li>`;
-                });
-                occupantsHtml += '</ul>';
-            }
-            
-            // Message d'avertissement si présent
-            let warningHtml = '';
-            if (warningMessage) {
-                warningHtml = `
-                <div class="error-message">
-                    <p>${warningMessage}</p>
-                    <p>Veuillez prendre une capture d'écran de cette confirmation comme preuve de réservation.</p>
-                </div>`;
-            }
-            
-            reservationDetails.innerHTML = `
-                <div class="success-message">
-                    <p>Votre réservation a été enregistrée avec succès!</p>
-                    <p>Veuillez conserver cette page de confirmation ou prendre une capture d'écran.</p>
-                </div>
-                ${warningHtml}
-                <div class="reservation-summary">
-                    <p><strong>Réservé par:</strong> ${chambre.reservePar.prenom} ${chambre.reservePar.nom}</p>
-                    <p><strong>Email:</strong> ${chambre.reservePar.email}</p>
-                    <p><strong>Chambre:</strong> ${chambre.roomNumber}</p>
-                    <p><strong>Type de lit:</strong> ${chambre.bedType}</p>
-                    <p><strong>Capacité:</strong> ${chambre.capacity} personne(s)</p>
-                    ${occupantsHtml}
-                </div>
-                <button id="newReservationBtn">Faire une nouvelle réservation</button>
-                <button id="printConfirmationBtn" style="margin-left: 10px; background-color: #7d5a44;">Imprimer la confirmation</button>
+            // Afficher un message pour tester
+            document.getElementById('roomSection').innerHTML = `
+                <h2>Section Chambres</h2>
+                <p>Bonjour ${firstName} ${lastName}!</p>
+                <p>Votre email: ${email}</p>
+                <button onclick="backToUserSection()">Retour</button>
             `;
-            
-            document.getElementById('newReservationBtn').addEventListener('click', resetApplication);
-            document.getElementById('printConfirmationBtn').addEventListener('click', function() {
-                window.print();
-            });
         }
         
-        // Function to reset the application for a new reservation
-        function resetApplication() {
-            currentUser = null;
-            selectedRoom = null;
-            
-            document.getElementById('firstName').value = '';
-            document.getElementById('lastName').value = '';
-            document.getElementById('email').value = '';
-            
-            document.getElementById('confirmationSection').classList.add('hidden');
+        function backToUserSection() {
             document.getElementById('roomSection').classList.add('hidden');
             document.getElementById('userSection').classList.remove('hidden');
-            
-            loadData(); // Reload the latest data
-        }
-
-        // Admin functions
-        function showAdminModal() {
-            console.log("Affichage du modal administrateur");
-            const modal = document.getElementById('adminModal');
-            if (modal) {
-                modal.style.display = 'block';
-            } else {
-                console.error("Modal administrateur non trouvé");
-                alert("Erreur: Modal administrateur non trouvé");
-            }
         }
         
-        function hideAdminModal() {
-            console.log("Fermeture du modal administrateur");
-            const modal = document.getElementById('adminModal');
-            const adminPassword = document.getElementById('adminPassword');
-            
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            
-            if (adminPassword) {
-                adminPassword.value = '';
-            }
+        function showAdminModal() {
+            console.log("Affichage du modal admin");
+            document.getElementById('adminModal').style.display = 'block';
         }
         
         function loginAdmin() {
-            console.log("Tentative de connexion administrateur");
             const password = document.getElementById('adminPassword').value;
-            if (password === 'M+R') {
-                console.log("Connexion réussie");
-                hideAdminModal();
-                showAdminPanel();
+            if(password === 'M+R') {
+                document.getElementById('adminModal').style.display = 'none';
+                document.getElementById('mainContainer').classList.add('hidden');
+                document.getElementById('adminSection').classList.remove('hidden');
             } else {
-                console.log("Mot de passe incorrect");
-                alert('Mot de passe incorrect.');
+                alert('Mot de passe incorrect');
             }
         }
         
-        function showAdminPanel() {
-            console.log("Affichage du panneau administrateur");
-            // Masquer toutes les sections principales
-            const mainContainer = document.getElementById('mainContainer');
-            if (mainContainer) {
-                mainContainer.classList.add('hidden');
-            }
-            
-            // Afficher la section admin
-            const adminSection = document.getElementById('adminSection');
-            if (adminSection) {
-                adminSection.classList.remove('hidden');
-                loadAdminRoomTable();
-            } else {
-                console.error("Section administrateur non trouvée");
-                alert("Erreur: Section administrateur non trouvée");
+        function backToMain() {
+            document.getElementById('adminSection').classList.add('hidden');
+            document.getElementById('mainContainer').classList.remove('hidden');
+        }
+        
+        // Click handler pour fermer le modal quand on clique à l'extérieur
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('adminModal')) {
+                document.getElementById('adminModal').style.display = "none";
             }
         }
         
-        function loadAdminRoomTable() {
-            const tableBody = document.getElementById('adminRoomTable');
-            tableBody.innerHTML = '';
-            
-            chambres.forEach(chambre => {
-                const row = document.createElement('tr');
-                
-                let reserveParInfo = 'Non réservée';
-                let occupantsInfo = '-';
-                let disponibiliteInfo = '<span style="color: green;">Disponible</span>';
-                let actionButton = '';
-                
-                if (!chambre.disponibilite && chambre.reservePar) {
-                    reserveParInfo = `${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email})`;
-                    occupantsInfo = chambre.autresOccupants.join(', ') || '-';
-                    disponibiliteInfo = '<span style="color: red;">Réservée</span>';
-                    actionButton = `<button class="reset-room-btn" data-room="${chambre.roomNumber}">Réinitialiser</button>`;
-                }
-                
-                row.innerHTML = `
-                    <td>${chambre.roomNumber}</td>
-                    <td>${chambre.bedType}</td>
-                    <td>${chambre.capacity}</td>
-                    <td>${disponibiliteInfo}</td>
-                    <td>${reserveParInfo}</td>
-                    <td>${occupantsInfo}</td>
-                    <td>${actionButton}</td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-            
-            // Add event listeners to reset buttons
-            document.querySelectorAll('.reset-room-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const roomNumber = parseInt(this.getAttribute('data-room'));
-                    resetRoom(roomNumber);
-                });
-            });
-        }
-        
-        function resetRoom(roomNumber) {
-            if (confirm(`Êtes-vous sûr de vouloir réinitialiser la chambre ${roomNumber} ?`)) {
-                const roomIndex = chambres.findIndex(chambre => chambre.roomNumber === roomNumber);
-                if (roomIndex !== -1) {
-                    chambres[roomIndex].reservePar = null;
-                    chambres[roomIndex].autresOccupants = [];
-                    chambres[roomIndex].disponibilite = true;
-                    
-                    saveData();
-                    loadAdminRoomTable();
-                    
-                    alert(`La chambre ${roomNumber} a été réinitialisée avec succès.`);
-                }
-            }
-        }
-        
-        function exportDataToCsv() {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            
-            // Header
-            csvContent += "Numéro de chambre,Type de lit,Capacité,Disponibilité,Réservé par,Email,Autres occupants\r\n";
-            
-            // Rows
-            chambres.forEach(chambre => {
-                let reservePar = chambre.disponibilite ? "" : `${chambre.reservePar.prenom} ${chambre.reservePar.nom}`;
-                let email = chambre.disponibilite ? "" : chambre.reservePar.email;
-                let autresOccupants = chambre.disponibilite ? "" : chambre.autresOccupants.join(", ");
-                let disponibilite = chambre.disponibilite ? "Disponible" : "Réservée";
-                
-                csvContent += `${chambre.roomNumber},${chambre.bedType},${chambre.capacity},${disponibilite},${reservePar},${email},${autresOccupants}\r\n`;
-            });
-            
-            // Create download link
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "reservations_chambres.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Fonction pour forcer l'initialisation de la base de données
-        async function forceInitDatabase() {
-            try {
-                // Afficher le message d'initialisation
-                const initMessage = document.getElementById('initMessage');
-                if (initMessage) {
-                    initMessage.classList.remove('hidden');
-                }
-                
-                const userSection = document.getElementById('userSection');
-                if (userSection) {
-                    userSection.classList.add('hidden');
-                }
-                
-                showLoading();
-                console.log("Forcing database initialization...");
-                
-                // Créer des instances de Chambre à partir des données initiales
-                chambres = dbChambresInitiales.map(room => 
-                    new Chambre(room.roomNumber, room.bedType, room.capacity)
-                );
-                
-                console.log("Created", chambres.length, "rooms from default data");
-                
-                // Sauvegarder dans Firestore
-                await saveData();
-                
-                console.log("Database initialized successfully");
-                
-                hideLoading();
-                
-                // Masquer le message d'initialisation et afficher le formulaire
-                if (initMessage) {
-                    initMessage.classList.add('hidden');
-                }
-                
-                if (userSection) {
-                    userSection.classList.remove('hidden');
-                }
-                
-                alert("Base de données initialisée avec succès avec " + chambres.length + " chambres.");
-                
-                // Si on est dans la section admin, mettre à jour la table
-                if (document.getElementById('adminSection') && !document.getElementById('adminSection').classList.contains('hidden')) {
-                    loadAdminRoomTable();
-                }
-                
-            } catch (error) {
-                console.error("Error initializing database:", error);
-                alert("Erreur lors de l'initialisation de la base de données: " + error.message);
-                
-                hideLoading();
-                
-                // En cas d'erreur, masquer le message et afficher le formulaire
-                const initMessage = document.getElementById('initMessage');
-                const userSection = document.getElementById('userSection');
-                
-                if (initMessage) {
-                    initMessage.classList.add('hidden');
-                }
-                
-                if (userSection) {
-                    userSection.classList.remove('hidden');
-                }
-            }
-        }
-
-        // Initialisation de l'application
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM chargé, démarrage de l'application");
-            
-            showLoading();
-            
-            // Initialiser Firebase
-            initFirebase();
-            
-            // Vérifier s'il faut forcer l'initialisation
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('init') && urlParams.get('init') === 'true') {
-                forceInitDatabase();
-            }
-            
-            // User info form
-            const userInfoBtn = document.getElementById('userInfoBtn');
-            if (userInfoBtn) {
-                userInfoBtn.addEventListener('click', function() {
-                    console.log("Bouton Continuer cliqué");
-                    if (saisieNouvelUtilisateur()) {
-                        document.getElementById('userSection').classList.add('hidden');
-                        document.getElementById('roomSection').classList.remove('hidden');
-                        afficherChambresDisponibles();
-                    }
-                });
-                console.log("Événement attaché au bouton userInfoBtn");
-            } else {
-                console.error("Bouton userInfoBtn non trouvé dans le DOM");
-            }
-            
-            // Admin link
-            const adminLink = document.getElementById('adminLink');
-            if (adminLink) {
-                adminLink.addEventListener('click', function(e) {
-                    console.log("Lien Admin cliqué");
-                    e.preventDefault();
-                    showAdminModal();
-                });
-                console.log("Événement attaché au lien adminLink");
-            } else {
-                console.error("Lien adminLink non trouvé dans le DOM");
-            }
-            
-            // Admin modal close button
-            const closeBtn = document.querySelector('.close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', hideAdminModal);
-                console.log("Événement attaché au bouton de fermeture du modal");
-            } else {
-                console.error("Bouton close non trouvé dans le DOM");
-            }
-            
-            // Admin login button
-            const adminLoginBtn = document.getElementById('adminLoginBtn');
-            if (adminLoginBtn) {
-                adminLoginBtn.addEventListener('click', loginAdmin);
-                console.log("Événement attaché au bouton adminLoginBtn");
-            } else {
-                console.error("Bouton adminLoginBtn non trouvé dans le DOM");
-            }
-            
-            // Export data button
-            const exportBtn = document.getElementById('exportBtn');
-            if (exportBtn) {
-                exportBtn.addEventListener('click', exportDataToCsv);
-                console.log("Événement attaché au bouton exportBtn");
-            } else {
-                console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
-            }
-            
-            // Initialize database button (in admin panel)
-            const initDatabaseBtn = document.getElementById('initDatabaseBtn');
-            if (initDatabaseBtn) {
-                initDatabaseBtn.addEventListener('click', function() {
-                    if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
-                        forceInitDatabase();
-                    }
-                });
-                console.log("Événement attaché au bouton initDatabaseBtn");
-            } else {
-                console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
-            }
-            
-            // Back to main page button
-            const backToMainBtn = document.getElementById('backToMainBtn');
-            if (backToMainBtn) {
-                backToMainBtn.addEventListener('click', function() {
-                    document.getElementById('adminSection').classList.add('hidden');
-                    document.getElementById('mainContainer').classList.remove('hidden');
-                });
-                console.log("Événement attaché au bouton backToMainBtn");
-            } else {
-                console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
-            }
-            
-            // Add listener for the validate button when it appears
-            document.getElementById('roomSection').addEventListener('click', function(e) {
-                if (e.target && e.target.id === 'validateRoomBtn') {
-                    validerDonnees();
-                }
-            });
-            
-            console.log("Initialisation des événements terminée");
-        });
+        // Message de débogage
+        console.log("Script chargé");
     </script>
 </body>
 </html>
