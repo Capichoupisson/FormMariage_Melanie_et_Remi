@@ -6,23 +6,6 @@
     <title>Réservation de Chambre - Mariage</title>
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💍</text></svg>" type="image/svg+xml">
     
-    <!-- Fallback options for database storage -->
-    <script>
-        function fallbackToServerless() {
-            // Use GitHub as serverless backend
-            // This can be used later as an alternative to Firebase
-            const useServerless = false;
-            return useServerless;
-        }
-    </script>
-    <script>
-        function fallbackToServerless() {
-            // Use GitHub as serverless backend
-            // This can be used later as an alternative to Firebase
-            const useServerless = false;
-            return useServerless;
-        }
-    </script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -95,7 +78,7 @@
             background-color: #d5c5b5; /* Beige grisé */
             cursor: not-allowed;
         }
-        
+
         .room-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -178,7 +161,6 @@
         .admin-table tr:nth-child(even) {
             background-color: rgba(222, 184, 135, 0.1);
         }
-        
         .admin-buttons {
             margin: 20px 0;
             display: flex;
@@ -214,14 +196,8 @@
         }
         
         .close {
-            text-decoration: none;
-            border-bottom: 1px dotted #a04b2d;
-        }
-        
-        .admin-link a:hover {
-            color: #823c22;
-            border-bottom: 1px solid #823c22;
-        }float: right;
+            color: #a04b2d;
+            float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -332,58 +308,6 @@
                 background-color: white;
             }
         }
-    </style>text-decoration: none;
-            border-bottom: 1px dotted #a04b2d;
-        }
-        
-        .admin-link a:hover {
-            color: #823c22;
-            border-bottom: 1px solid #823c22;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(248, 244, 233, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        
-        .spinner {
-            border: 16px solid #e6d7c0;
-            border-top: 16px solid #b26b46;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            animation: spin 2s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .reset-room-btn {
-            background-color: #d05c46; /* Rouge-orange plus vif */
-        }
-        
-        .reset-room-btn:hover {
-            background-color: #b24c37;
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #7d5a44;
-            font-size: 14px;
-            padding-top: 10px;
-            border-top: 1px solid #d9b78c;
-        }
     </style>
 </head>
 <body>
@@ -396,7 +320,7 @@
             <p>Initialisation de la base de données en cours...</p>
             <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; margin: 10px auto; animation: spin 2s linear infinite;"></div>
         </div>
-        
+
         <div id="userSection" class="user-form">
             <h2>Vos informations</h2>
             <div class="form-group">
@@ -483,7 +407,7 @@
             Système de gestion de réservation pour mariage
         </div>
     </div>
-    
+
     <script>
         // Classes
         class Utilisateur {
@@ -505,6 +429,16 @@
             }
         }
         
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9VYqm_OBfrepPMWgo7dKGlpWsrl0zCUU",
+            authDomain: "formmariage.firebaseapp.com",
+            projectId: "formmariage",
+            storageBucket: "formmariage.firebasestorage.app",
+            messagingSenderId: "1028876338505",
+            appId: "1:1028876338505:web:dc28ba621ef95539a78698"
+        };
+
         // Database initialization
         const dbChambresInitiales = [
             { roomNumber: 11, bedType: "Double", capacity: 2 },
@@ -531,51 +465,33 @@
         let currentUser = null;
         let selectedRoom = null;
         let chambres = [];
-        
-        // Firebase configuration - vos informations spécifiques
-        const firebaseConfig = {
-            apiKey: "AIzaSyB9VYqm_OBfrepPMWgo7dKGlpWsrl0zCUU",
-            authDomain: "formmariage.firebaseapp.com",
-            projectId: "formmariage",
-            storageBucket: "formmariage.firebasestorage.app",
-            messagingSenderId: "1028876338505",
-            appId: "1:1028876338505:web:dc28ba621ef95539a78698"
-        };
-        
-        // Chargement des scripts Firebase (version moderne)
         let db;
-        
-        function loadFirebaseScripts() {
-            return new Promise((resolve, reject) => {
-                // Charger le script principal Firebase app
-                const appScript = document.createElement('script');
-                appScript.src = 'https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js';
-                appScript.type = 'module';
-                
-                // Charger le script Firestore
-                const firestoreScript = document.createElement('script');
-                firestoreScript.src = 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
-                firestoreScript.type = 'module';
-                
-                // Attendre que les scripts soient chargés
-                appScript.onload = () => {
-                    firestoreScript.onload = () => {
-                        resolve();
-                    };
-                    firestoreScript.onerror = reject;
-                    document.head.appendChild(firestoreScript);
-                };
-                appScript.onerror = reject;
-                document.head.appendChild(appScript);
-            });
+
+        // Show loading indicator
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.className = 'loading-overlay';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner';
+            
+            loadingDiv.appendChild(spinner);
+            document.body.appendChild(loadingDiv);
         }
         
+        function hideLoading() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
+
         // Initialiser Firebase
         async function initFirebase() {
             try {
                 console.log("Initialisation de Firebase...");
                 
-                // Fallback vers la version compat si les modules échouent
                 try {
                     // Initialisation avec import dynamique
                     const firebaseApp = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js');
@@ -586,10 +502,7 @@
                     db = firebaseFirestore.getFirestore(app);
                     
                     console.log("Firebase initialized successfully (module version)");
-                    const success = await loadData();
-                    if (!success) {
-                        throw new Error("Échec du chargement des données");
-                    }
+                    await loadData();
                 } catch (error) {
                     console.error("Error initializing Firebase module version:", error);
                     
@@ -636,7 +549,7 @@
                 hideLoading();
             }
         }
-        
+
         // Charger depuis localStorage (fallback)
         function loadLocalData() {
             const savedChambres = localStorage.getItem('chambres');
@@ -660,7 +573,7 @@
             // Cacher l'indicateur de chargement
             hideLoading();
         }
-        
+
         // Fonction pour charger les données depuis Firestore
         async function loadData() {
             try {
@@ -749,7 +662,7 @@
                 return false;
             }
         }
-        
+
         // Fonction pour sauvegarder les données dans Firestore
         async function saveData() {
             // D'abord, sauvegarder dans localStorage comme backup
@@ -879,6 +792,17 @@
                     } catch (error) {
                         console.error("Error in Firestore operations (module):", error);
                         hideLoading();
+                        throw error; // Relancer l'erreur pour le gest
+
+
+                    // Attendre que toutes les ajouts soient terminés
+                        await Promise.all(addPromises);
+                        console.log("All new documents added successfully (module version)");
+                        
+                        hideLoading(); // Cacher l'indicateur une fois terminé
+                    } catch (error) {
+                        console.error("Error in Firestore operations (module):", error);
+                        hideLoading();
                         throw error; // Relancer l'erreur pour le gestionnaire d'erreurs principal
                     }
                 }
@@ -890,6 +814,12 @@
                 alert("Erreur lors de la mise à jour de la base de données. Les données ont été sauvegardées localement.");
                 return false; // Échec
             }
+        }
+        
+        // Fonction pour enregistrer les détails de la réservation (sans envoi d'email)
+        function enregistrerReservation(chambre) {
+            console.log(`Réservation enregistrée pour ${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email}) - Chambre ${chambre.roomNumber}`);
+            return true;
         }
         
         // Function to create a new user
@@ -950,7 +880,7 @@
                 selectBtn.addEventListener('click', () => selectionChambre(chambre));
             });
         }
-        
+
         // Function to select a room
         function selectionChambre(chambre) {
             // Reset previously selected room
@@ -1053,7 +983,7 @@
                 alert("Une erreur est survenue lors de la validation. Veuillez réessayer.");
             }
         }
-        
+
         // Function to display the confirmation
         function afficherConfirmation(chambre, warningMessage = null) {
             hideLoading(); // Cacher le loader
@@ -1108,12 +1038,6 @@
             });
         }
         
-        // Fonction pour enregistrer les détails de la réservation (sans envoi d'email)
-        function enregistrerReservation(chambre) {
-            console.log(`Réservation enregistrée pour ${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email}) - Chambre ${chambre.roomNumber}`);
-            return true;
-        }
-        
         // Function to reset the application for a new reservation
         function resetApplication() {
             currentUser = null;
@@ -1129,7 +1053,7 @@
             
             loadData(); // Reload the latest data
         }
-        
+
         // Admin functions
         function showAdminModal() {
             console.log("Affichage du modal administrateur");
@@ -1172,10 +1096,10 @@
         function showAdminPanel() {
             console.log("Affichage du panneau administrateur");
             // Masquer toutes les sections principales
-            const mainContainers = document.querySelectorAll('.container:not(#adminSection)');
-            mainContainers.forEach(container => {
-                container.classList.add('hidden');
-            });
+            const mainContainer = document.getElementById('mainContainer');
+            if (mainContainer) {
+                mainContainer.classList.add('hidden');
+            }
             
             // Afficher la section admin
             const adminSection = document.getElementById('adminSection');
@@ -1270,52 +1194,22 @@
             link.click();
             document.body.removeChild(link);
         }
-        
-        // Show loading indicator
-        function showLoading() {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'loadingIndicator';
-            loadingDiv.style.position = 'fixed';
-            loadingDiv.style.top = '0';
-            loadingDiv.style.left = '0';
-            loadingDiv.style.width = '100%';
-            loadingDiv.style.height = '100%';
-            loadingDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-            loadingDiv.style.display = 'flex';
-            loadingDiv.style.justifyContent = 'center';
-            loadingDiv.style.alignItems = 'center';
-            loadingDiv.style.zIndex = '9999';
-            
-            const spinner = document.createElement('div');
-            spinner.style.border = '16px solid #f3f3f3';
-            spinner.style.borderTop = '16px solid #3498db';
-            spinner.style.borderRadius = '50%';
-            spinner.style.width = '120px';
-            spinner.style.height = '120px';
-            spinner.style.animation = 'spin 2s linear infinite';
-            
-            const styleElement = document.createElement('style');
-            styleElement.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
-            
-            document.head.appendChild(styleElement);
-            loadingDiv.appendChild(spinner);
-            document.body.appendChild(loadingDiv);
-        }
-        
-        function hideLoading() {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            if (loadingIndicator) {
-                loadingIndicator.remove();
-            }
-        }
 
         // Fonction pour forcer l'initialisation de la base de données
         async function forceInitDatabase() {
             try {
                 // Afficher le message d'initialisation
-                document.getElementById('initMessage').classList.remove('hidden');
-                document.getElementById('userSection').classList.add('hidden');
+                const initMessage = document.getElementById('initMessage');
+                if (initMessage) {
+                    initMessage.classList.remove('hidden');
+                }
                 
+                const userSection = document.getElementById('userSection');
+                if (userSection) {
+                    userSection.classList.add('hidden');
+                }
+                
+                showLoading();
                 console.log("Forcing database initialization...");
                 
                 // Créer des instances de Chambre à partir des données initiales
@@ -1330,300 +1224,52 @@
                 
                 console.log("Database initialized successfully");
                 
+                hideLoading();
+                
                 // Masquer le message d'initialisation et afficher le formulaire
-                document.getElementById('initMessage').classList.add('hidden');
-                document.getElementById('userSection').classList.remove('hidden');
+                if (initMessage) {
+                    initMessage.classList.add('hidden');
+                }
+                
+                if (userSection) {
+                    userSection.classList.remove('hidden');
+                }
                 
                 alert("Base de données initialisée avec succès avec " + chambres.length + " chambres.");
+                
+                // Si on est dans la section admin, mettre à jour la table
+                if (document.getElementById('adminSection') && !document.getElementById('adminSection').classList.contains('hidden')) {
+                    loadAdminRoomTable();
+                }
                 
             } catch (error) {
                 console.error("Error initializing database:", error);
                 alert("Erreur lors de l'initialisation de la base de données: " + error.message);
                 
+                hideLoading();
+                
                 // En cas d'erreur, masquer le message et afficher le formulaire
-                document.getElementById('initMessage').classList.add('hidden');
-                document.getElementById('userSection').classList.remove('hidden');
+                const initMessage = document.getElementById('initMessage');
+                const userSection = document.getElementById('userSection');
+                
+                if (initMessage) {
+                    initMessage.classList.add('hidden');
+                }
+                
+                if (userSection) {
+                    userSection.classList.remove('hidden');
+                }
             }
         }
 
-        // Initialise l'application
-        function initApp() {
-            console.log("Initialisation de l'application...");
-            showLoading();
-            
-            // Vérifier que les éléments existent avant d'attacher les événements
-            document.addEventListener('DOMContentLoaded', function() {
-                try {
-                    // Initialiser Firebase
-                    initFirebase();
-                    
-                    // Vérifier s'il faut forcer l'initialisation
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('init') && urlParams.get('init') === 'true') {
-                        forceInitDatabase();
-                    }
-                    
-                    // User info form
-                    const userInfoBtn = document.getElementById('userInfoBtn');
-                    if (userInfoBtn) {
-                        userInfoBtn.addEventListener('click', function() {
-                            if (saisieNouvelUtilisateur()) {
-                                document.getElementById('userSection').classList.add('hidden');
-                                document.getElementById('roomSection').classList.remove('hidden');
-                                afficherChambresDisponibles();
-                            }
-                        });
-                        console.log("Événement attaché au bouton userInfoBtn");
-                    } else {
-                        console.error("Bouton userInfoBtn non trouvé dans le DOM");
-                    }
-                    
-                    // Room validation
-                    const validateRoomBtn = document.getElementById('validateRoomBtn');
-                    if (validateRoomBtn) {
-                        validateRoomBtn.addEventListener('click', validerDonnees);
-                        console.log("Événement attaché au bouton validateRoomBtn");
-                    } else {
-                        console.log("Bouton validateRoomBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Admin link
-                    const adminLink = document.getElementById('adminLink');
-                    if (adminLink) {
-                        adminLink.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            showAdminModal();
-                        });
-                        console.log("Événement attaché au lien adminLink");
-                    } else {
-                        console.error("Lien adminLink non trouvé dans le DOM");
-                    }
-                    
-                    // Admin modal close button
-                    const closeBtn = document.querySelector('.close');
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', hideAdminModal);
-                        console.log("Événement attaché au bouton de fermeture du modal");
-                    } else {
-                        console.error("Bouton close non trouvé dans le DOM");
-                    }
-                    
-                    // Admin login button
-                    const adminLoginBtn = document.getElementById('adminLoginBtn');
-                    if (adminLoginBtn) {
-                        adminLoginBtn.addEventListener('click', loginAdmin);
-                        console.log("Événement attaché au bouton adminLoginBtn");
-                    } else {
-                        console.error("Bouton adminLoginBtn non trouvé dans le DOM");
-                    }
-                    
-                    // Export data button
-                    const exportBtn = document.getElementById('exportBtn');
-                    if (exportBtn) {
-                        exportBtn.addEventListener('click', exportDataToCsv);
-                        console.log("Événement attaché au bouton exportBtn");
-                    } else {
-                        console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Initialize database button (in admin panel)
-                    const initDatabaseBtn = document.getElementById('initDatabaseBtn');
-                    if (initDatabaseBtn) {
-                        initDatabaseBtn.addEventListener('click', function() {
-                            if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
-                                forceInitDatabase();
-                            }
-                        });
-                        console.log("Événement attaché au bouton initDatabaseBtn");
-                    } else {
-                        console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Back to main page button
-                    const backToMainBtn = document.getElementById('backToMainBtn');
-                    if (backToMainBtn) {
-                        backToMainBtn.addEventListener('click', function() {
-                            document.getElementById('adminSection').classList.add('hidden');
-                            const mainContainer = document.querySelector('.container:not(#adminSection)');
-                            if (mainContainer) {
-                                mainContainer.classList.remove('hidden');
-                            }
-                        });
-                        console.log("Événement attaché au bouton backToMainBtn");
-                    } else {
-                        console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Close modal when clicking outside of it
-                    window.addEventListener('click', function(event) {
-                        const modal = document.getElementById('adminModal');
-                        if (modal && event.target === modal) {
-                            hideAdminModal();
-                        }
-                    });
-                    
-                    // Refresh data button (visible uniquement sur la page admin)
-                    const adminSection = document.getElementById('adminSection');
-                    if (adminSection) {
-                        const refreshButton = document.createElement('button');
-                        refreshButton.innerText = 'Actualiser les données';
-                        refreshButton.style.marginTop = '10px';
-                        refreshButton.style.backgroundColor = '#d7a367';
-                        refreshButton.addEventListener('click', loadData);
-                        adminSection.appendChild(refreshButton);
-                        console.log("Bouton d'actualisation ajouté à la section admin");
-                    } else {
-                        console.error("Section admin non trouvée dans le DOM");
-                    }
-                    
-                    console.log("Initialisation des événements terminée");
-                    
-                } catch (error) {
-                    console.error("Erreur lors de l'initialisation de l'application:", error);
-                    alert("Une erreur est survenue lors de l'initialisation. Veuillez rafraîchir la page.");
-                }
-            });
-            
-            // Hide loading after a timeout
-            setTimeout(hideLoading, 5000); // Longer timeout to ensure everything is loaded
-        }
-        
-        // Run the app
+        // Initialisation de l'application
         document.addEventListener('DOMContentLoaded', function() {
             console.log("DOM chargé, démarrage de l'application");
-            initApp();
-        });
-                    
-                    // Vérifier s'il faut forcer l'initialisation
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('init') && urlParams.get('init') === 'true') {
-                        forceInitDatabase();
-                    }
-                    
-                    // User info form
-                    const userInfoBtn = document.getElementById('userInfoBtn');
-                    if (userInfoBtn) {
-                        userInfoBtn.addEventListener('click', function() {
-                            if (saisieNouvelUtilisateur()) {
-                                document.getElementById('userSection').classList.add('hidden');
-                                document.getElementById('roomSection').classList.remove('hidden');
-                                afficherChambresDisponibles();
-                            }
-                        });
-                        console.log("Événement attaché au bouton userInfoBtn");
-                    } else {
-                        console.error("Bouton userInfoBtn non trouvé dans le DOM");
-                    }
-                    
-                    // Room validation
-                    const validateRoomBtn = document.getElementById('validateRoomBtn');
-                    if (validateRoomBtn) {
-                        validateRoomBtn.addEventListener('click', validerDonnees);
-                        console.log("Événement attaché au bouton validateRoomBtn");
-                    } else {
-                        console.log("Bouton validateRoomBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Admin link
-                    const adminLink = document.getElementById('adminLink');
-                    if (adminLink) {
-                        adminLink.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            showAdminModal();
-                        });
-                        console.log("Événement attaché au lien adminLink");
-                    } else {
-                        console.error("Lien adminLink non trouvé dans le DOM");
-                    }
-                    
-                    // Admin modal close button
-                    const closeBtn = document.querySelector('.close');
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', hideAdminModal);
-                        console.log("Événement attaché au bouton de fermeture du modal");
-                    } else {
-                        console.error("Bouton close non trouvé dans le DOM");
-                    }
-                    
-                    // Admin login button
-                    const adminLoginBtn = document.getElementById('adminLoginBtn');
-                    if (adminLoginBtn) {
-                        adminLoginBtn.addEventListener('click', loginAdmin);
-                        console.log("Événement attaché au bouton adminLoginBtn");
-                    } else {
-                        console.error("Bouton adminLoginBtn non trouvé dans le DOM");
-                    }
-                    
-                    // Export data button
-                    const exportBtn = document.getElementById('exportBtn');
-                    if (exportBtn) {
-                        exportBtn.addEventListener('click', exportDataToCsv);
-                        console.log("Événement attaché au bouton exportBtn");
-                    } else {
-                        console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Initialize database button (in admin panel)
-                    const initDatabaseBtn = document.getElementById('initDatabaseBtn');
-                    if (initDatabaseBtn) {
-                        initDatabaseBtn.addEventListener('click', function() {
-                            if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
-                                forceInitDatabase();
-                            }
-                        });
-                        console.log("Événement attaché au bouton initDatabaseBtn");
-                    } else {
-                        console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Back to main page button
-                    const backToMainBtn = document.getElementById('backToMainBtn');
-                    if (backToMainBtn) {
-                        backToMainBtn.addEventListener('click', function() {
-                            document.getElementById('adminSection').classList.add('hidden');
-                            const mainContainer = document.querySelector('.container:not(#adminSection)');
-                            if (mainContainer) {
-                                mainContainer.classList.remove('hidden');
-                            }
-                        });
-                        console.log("Événement attaché au bouton backToMainBtn");
-                    } else {
-                        console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
-                    }
-                    
-                    // Close modal when clicking outside of it
-                    window.addEventListener('click', function(event) {
-                        const modal = document.getElementById('adminModal');
-                        if (modal && event.target === modal) {
-                            hideAdminModal();
-                        }
-                    });
-                    
-                    // Refresh data button (visible uniquement sur la page admin)
-                    const adminSection = document.getElementById('adminSection');
-                    if (adminSection) {
-                        const refreshButton = document.createElement('button');
-                        refreshButton.innerText = 'Actualiser les données';
-                        refreshButton.style.marginTop = '10px';
-                        refreshButton.style.backgroundColor = '#d7a367';
-                        refreshButton.addEventListener('click', loadData);
-                        adminSection.appendChild(refreshButton);
-                        console.log("Bouton d'actualisation ajouté à la section admin");
-                    } else {
-                        console.error("Section admin non trouvée dans le DOM");
-                    }
-                    
-                    console.log("Initialisation des événements terminée");
-                    
-                } catch (error) {
-                    console.error("Erreur lors de l'initialisation de l'application:", error);
-                    alert("Une erreur est survenue lors de l'initialisation. Veuillez rafraîchir la page.");
-                }
-            });
             
-            // Hide loading after a timeout
-            setTimeout(hideLoading, 5000); // Longer timeout to ensure everything is loaded
-        }
+            showLoading();
+            
+            // Initialiser Firebase
+            initFirebase();
             
             // Vérifier s'il faut forcer l'initialisation
             const urlParams = new URLSearchParams(window.location.search);
@@ -1632,77 +1278,95 @@
             }
             
             // User info form
-            document.getElementById('userInfoBtn').addEventListener('click', function() {
-                if (saisieNouvelUtilisateur()) {
-                    document.getElementById('userSection').classList.add('hidden');
-                    document.getElementById('roomSection').classList.remove('hidden');
-                    afficherChambresDisponibles();
-                }
-            });
-            
-            // Room validation
-            document.getElementById('validateRoomBtn').addEventListener('click', validerDonnees);
+            const userInfoBtn = document.getElementById('userInfoBtn');
+            if (userInfoBtn) {
+                userInfoBtn.addEventListener('click', function() {
+                    console.log("Bouton Continuer cliqué");
+                    if (saisieNouvelUtilisateur()) {
+                        document.getElementById('userSection').classList.add('hidden');
+                        document.getElementById('roomSection').classList.remove('hidden');
+                        afficherChambresDisponibles();
+                    }
+                });
+                console.log("Événement attaché au bouton userInfoBtn");
+            } else {
+                console.error("Bouton userInfoBtn non trouvé dans le DOM");
+            }
             
             // Admin link
-            document.getElementById('adminLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                showAdminModal();
-            });
+            const adminLink = document.getElementById('adminLink');
+            if (adminLink) {
+                adminLink.addEventListener('click', function(e) {
+                    console.log("Lien Admin cliqué");
+                    e.preventDefault();
+                    showAdminModal();
+                });
+                console.log("Événement attaché au lien adminLink");
+            } else {
+                console.error("Lien adminLink non trouvé dans le DOM");
+            }
             
             // Admin modal close button
-            document.querySelector('.close').addEventListener('click', hideAdminModal);
+            const closeBtn = document.querySelector('.close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideAdminModal);
+                console.log("Événement attaché au bouton de fermeture du modal");
+            } else {
+                console.error("Bouton close non trouvé dans le DOM");
+            }
             
             // Admin login button
-            document.getElementById('adminLoginBtn').addEventListener('click', loginAdmin);
+            const adminLoginBtn = document.getElementById('adminLoginBtn');
+            if (adminLoginBtn) {
+                adminLoginBtn.addEventListener('click', loginAdmin);
+                console.log("Événement attaché au bouton adminLoginBtn");
+            } else {
+                console.error("Bouton adminLoginBtn non trouvé dans le DOM");
+            }
             
             // Export data button
-            document.getElementById('exportBtn').addEventListener('click', exportDataToCsv);
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportDataToCsv);
+                console.log("Événement attaché au bouton exportBtn");
+            } else {
+                console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
+            }
+            
+            // Initialize database button (in admin panel)
+            const initDatabaseBtn = document.getElementById('initDatabaseBtn');
+            if (initDatabaseBtn) {
+                initDatabaseBtn.addEventListener('click', function() {
+                    if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
+                        forceInitDatabase();
+                    }
+                });
+                console.log("Événement attaché au bouton initDatabaseBtn");
+            } else {
+                console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
+            }
             
             // Back to main page button
-            document.getElementById('backToMainBtn').addEventListener('click', function() {
-                document.getElementById('adminSection').classList.add('hidden');
-                document.querySelector('.container').classList.remove('hidden');
-            });
+            const backToMainBtn = document.getElementById('backToMainBtn');
+            if (backToMainBtn) {
+                backToMainBtn.addEventListener('click', function() {
+                    document.getElementById('adminSection').classList.add('hidden');
+                    document.getElementById('mainContainer').classList.remove('hidden');
+                });
+                console.log("Événement attaché au bouton backToMainBtn");
+            } else {
+                console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
+            }
             
-            // Close modal when clicking outside of it
-            window.addEventListener('click', function(event) {
-                const modal = document.getElementById('adminModal');
-                if (event.target === modal) {
-                    hideAdminModal();
+            // Add listener for the validate button when it appears
+            document.getElementById('roomSection').addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'validateRoomBtn') {
+                    validerDonnees();
                 }
             });
             
-            // Refresh data button
-            const refreshButton = document.createElement('button');
-            refreshButton.innerText = 'Actualiser les données';
-            refreshButton.style.position = 'fixed';
-            refreshButton.style.bottom = '10px';
-            refreshButton.style.right = '10px';
-            refreshButton.style.zIndex = '1000';
-            refreshButton.addEventListener('click', loadData);
-            adminSection.appendChild(refreshButton);
-            
-            // Hide loading once Firebase is initialized
-            setTimeout(hideLoading, 3000); // Give it a few seconds to initialize Firebase
+            console.log("Initialisation des événements terminée");
         });
-            document.body.appendChild(refreshButton);
-            
-            // Init database button (admin use)
-            const initButton = document.createElement('button');
-            initButton.innerText = 'Initialiser la base de données';
-            initButton.style.position = 'fixed';
-            initButton.style.bottom = '50px';
-            initButton.style.right = '10px';
-            initButton.style.zIndex = '1000';
-            initButton.addEventListener('click', forceInitDatabase);
-            document.body.appendChild(initButton);
-            
-            // Hide loading once Firebase is initialized
-            setTimeout(hideLoading, 3000); // Give it a few seconds to initialize Firebase
-        }
-        
-        // Run the app
-        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
