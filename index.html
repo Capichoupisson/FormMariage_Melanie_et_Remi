@@ -4,8 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Réservation de Chambre - Mariage</title>
-    <!-- Favicon -->
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💍</text></svg>" type="image/svg+xml">
+    
+    <!-- Inclusion d'EmailJS pour les emails réels -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        (function() {
+            // Remplacez par votre User ID EmailJS
+            emailjs.init("YOUR_USER_ID");
+        })();
+    </script>
+    
     <!-- Fallback options for database storage -->
     <script>
         function fallbackToServerless() {
@@ -325,6 +334,10 @@
         <div class="admin-link">
             <a href="#" id="adminLink">Administration</a>
         </div>
+        
+        <div class="footer">
+            <p>Système de réservation pour le mariage | 2025</p>
+        </div>
     </div>
     
     <!-- Modal for admin login -->
@@ -613,61 +626,68 @@
             localStorage.setItem('chambres', JSON.stringify(chambres));
             
             try {
+                showLoading(); // Afficher l'indicateur de chargement pendant la sauvegarde
+                
                 // Vérifier si nous utilisons la version module ou compat
                 if (typeof firebase !== 'undefined' && firebase.firestore) {
                     // Version compat
                     console.log("Using compat version for data saving");
                     
-                    // Créer un batch pour les opérations groupées
-                    const batch = db.batch();
-                    
                     try {
+                        // Approche alternative: supprimer puis recréer la collection entière
+                        const collectionRef = db.collection("chambres");
+                        
                         // Récupérer tous les documents existants
-                        const querySnapshot = await db.collection("chambres").get();
+                        const querySnapshot = await collectionRef.get();
                         
-                        // Supprimer tous les documents existants
+                        // Supprimer tous les documents un par un
+                        const deletePromises = [];
                         querySnapshot.forEach((doc) => {
-                            batch.delete(doc.ref);
+                            deletePromises.push(doc.ref.delete());
                         });
                         
-                        // Ajouter toutes les chambres actuelles
+                        // Attendre que toutes les suppressions soient terminées
+                        await Promise.all(deletePromises);
+                        console.log("All existing documents deleted");
+                        
+                        // Ajouter toutes les chambres une par une
+                        const addPromises = [];
                         chambres.forEach((chambre) => {
-                            const docRef = db.collection("chambres").doc(chambre.roomNumber.toString());
-                            
-                            // Assurez-vous que toutes les propriétés de l'objet sont sérialisables
+                            // Créer un objet de données propre
                             const chambreData = {
                                 roomNumber: chambre.roomNumber,
                                 bedType: chambre.bedType,
                                 capacity: chambre.capacity,
                                 disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || [],
-                                reservePar: chambre.reservePar || null
+                                autresOccupants: chambre.autresOccupants || []
                             };
                             
-                            batch.set(docRef, chambreData);
+                            // Traiter reservePar spécialement pour éviter les problèmes de sérialisation
+                            if (chambre.reservePar) {
+                                chambreData.reservePar = {
+                                    nom: chambre.reservePar.nom,
+                                    prenom: chambre.reservePar.prenom,
+                                    email: chambre.reservePar.email
+                                };
+                            } else {
+                                chambreData.reservePar = null;
+                            }
+                            
+                            // Ajouter le document à Firestore
+                            addPromises.push(
+                                collectionRef.doc(chambre.roomNumber.toString()).set(chambreData)
+                            );
                         });
                         
-                        // Exécuter le batch
-                        await batch.commit();
-                        console.log("Database updated successfully (compat)");
-                    } catch (error) {
-                        console.error("Error in batch operations:", error);
+                        // Attendre que toutes les ajouts soient terminés
+                        await Promise.all(addPromises);
+                        console.log("All new documents added successfully");
                         
-                        // Essayer d'écrire un par un si le batch échoue
-                        console.log("Trying individual writes instead...");
-                        for (const chambre of chambres) {
-                            const chambreData = {
-                                roomNumber: chambre.roomNumber,
-                                bedType: chambre.bedType,
-                                capacity: chambre.capacity,
-                                disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || [],
-                                reservePar: chambre.reservePar || null
-                            };
-                            
-                            await db.collection("chambres").doc(chambre.roomNumber.toString()).set(chambreData);
-                        }
-                        console.log("Individual writes completed");
+                        hideLoading(); // Cacher l'indicateur une fois terminé
+                    } catch (error) {
+                        console.error("Error in Firestore operations:", error);
+                        hideLoading();
+                        throw error; // Relancer l'erreur pour le gestionnaire d'erreurs principal
                     }
                 } else {
                     // Version module
@@ -675,64 +695,70 @@
                     const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
                     
                     try {
-                        // Créer une transaction pour mettre à jour la base de données
-                        const batch = firestore.writeBatch(db);
-                        
                         // Récupérer tous les documents existants
-                        const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                        const collectionRef = firestore.collection(db, "chambres");
+                        const querySnapshot = await firestore.getDocs(collectionRef);
                         
-                        // Supprimer tous les documents existants
+                        // Supprimer tous les documents un par un
+                        const deletePromises = [];
                         querySnapshot.forEach((doc) => {
-                            batch.delete(doc.ref);
+                            deletePromises.push(firestore.deleteDoc(doc.ref));
                         });
                         
-                        // Ajouter toutes les chambres actuelles
+                        // Attendre que toutes les suppressions soient terminées
+                        await Promise.all(deletePromises);
+                        console.log("All existing documents deleted (module version)");
+                        
+                        // Ajouter toutes les chambres une par une
+                        const addPromises = [];
                         chambres.forEach((chambre) => {
-                            const docRef = firestore.doc(db, "chambres", chambre.roomNumber.toString());
-                            
-                            // Assurez-vous que toutes les propriétés de l'objet sont sérialisables
+                            // Créer un objet de données propre
                             const chambreData = {
                                 roomNumber: chambre.roomNumber,
                                 bedType: chambre.bedType,
                                 capacity: chambre.capacity,
                                 disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || [],
-                                reservePar: chambre.reservePar || null
+                                autresOccupants: chambre.autresOccupants || []
                             };
                             
-                            batch.set(docRef, chambreData);
+                            // Traiter reservePar spécialement
+                            if (chambre.reservePar) {
+                                chambreData.reservePar = {
+                                    nom: chambre.reservePar.nom,
+                                    prenom: chambre.reservePar.prenom,
+                                    email: chambre.reservePar.email
+                                };
+                            } else {
+                                chambreData.reservePar = null;
+                            }
+                            
+                            // Ajouter le document à Firestore
+                            addPromises.push(
+                                firestore.setDoc(
+                                    firestore.doc(db, "chambres", chambre.roomNumber.toString()), 
+                                    chambreData
+                                )
+                            );
                         });
                         
-                        // Exécuter le batch
-                        await batch.commit();
-                        console.log("Database updated successfully (module)");
-                    } catch (error) {
-                        console.error("Error in batch operations:", error);
+                        // Attendre que toutes les ajouts soient terminés
+                        await Promise.all(addPromises);
+                        console.log("All new documents added successfully (module version)");
                         
-                        // Essayer d'écrire un par un si le batch échoue
-                        console.log("Trying individual writes instead...");
-                        for (const chambre of chambres) {
-                            const chambreData = {
-                                roomNumber: chambre.roomNumber,
-                                bedType: chambre.bedType,
-                                capacity: chambre.capacity,
-                                disponibilite: chambre.disponibilite,
-                                autresOccupants: chambre.autresOccupants || [],
-                                reservePar: chambre.reservePar || null
-                            };
-                            
-                            await firestore.setDoc(
-                                firestore.doc(db, "chambres", chambre.roomNumber.toString()), 
-                                chambreData
-                            );
-                        }
-                        console.log("Individual writes completed");
+                        hideLoading(); // Cacher l'indicateur une fois terminé
+                    } catch (error) {
+                        console.error("Error in Firestore operations (module):", error);
+                        hideLoading();
+                        throw error; // Relancer l'erreur pour le gestionnaire d'erreurs principal
                     }
                 }
                 
+                return true; // Succès
             } catch (error) {
                 console.error("Error updating database:", error);
-                alert("Les données ont été sauvegardées localement, mais pas synchronisées avec le serveur.");
+                hideLoading();
+                alert("Erreur lors de la mise à jour de la base de données. Les données ont été sauvegardées localement.");
+                return false; // Échec
             }
         }
         
@@ -854,11 +880,13 @@
         }
         
         // Function to validate the room selection and save data
-        function validerDonnees() {
+        async function validerDonnees() {
             if (!currentUser || !selectedRoom) {
                 alert('Une erreur est survenue. Veuillez recommencer.');
                 return;
             }
+            
+            showLoading(); // Afficher l'indicateur de chargement
             
             // Get all other occupants
             const occupantInputs = document.querySelectorAll('.occupant-input');
@@ -871,19 +899,29 @@
                 chambres[roomIndex].autresOccupants = autresOccupants;
                 chambres[roomIndex].disponibilite = false;
                 
-                // Save to localStorage
-                saveData();
+                // Save to Firestore and localStorage
+                const success = await saveData();
                 
-                // Show confirmation
-                afficherConfirmation(chambres[roomIndex]);
-                
-                // Send confirmation email (simulated in this example)
-                envoyerEmailConfirmation(chambres[roomIndex]);
+                if (success) {
+                    // Send confirmation email
+                    const emailSent = await envoyerEmailConfirmation(chambres[roomIndex]);
+                    
+                    // Show confirmation
+                    afficherConfirmation(chambres[roomIndex], emailSent);
+                } else {
+                    // En cas d'échec de sauvegarde, afficher quand même la confirmation mais avec avertissement
+                    afficherConfirmation(chambres[roomIndex], false, "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
+                }
+            } else {
+                hideLoading();
+                alert("Erreur: Chambre non trouvée dans la base de données.");
             }
         }
         
         // Function to display the confirmation
-        function afficherConfirmation(chambre) {
+        function afficherConfirmation(chambre, emailSent = true, warningMessage = null) {
+            hideLoading(); // Cacher le loader
+            
             document.getElementById('roomSection').classList.add('hidden');
             
             const confirmationSection = document.getElementById('confirmationSection');
@@ -900,11 +938,30 @@
                 occupantsHtml += '</ul>';
             }
             
+            // Message concernant l'email
+            let emailMessage = '';
+            if (emailSent) {
+                emailMessage = `<p>Un email de confirmation a été envoyé à ${chambre.reservePar.email}.</p>`;
+            } else {
+                emailMessage = `<p>L'envoi de l'email de confirmation à ${chambre.reservePar.email} a échoué. Veuillez contacter les organisateurs si nécessaire.</p>`;
+            }
+            
+            // Message d'avertissement si présent
+            let warningHtml = '';
+            if (warningMessage) {
+                warningHtml = `
+                <div class="error-message">
+                    <p>${warningMessage}</p>
+                    <p>Veuillez prendre une capture d'écran de cette confirmation comme preuve de réservation.</p>
+                </div>`;
+            }
+            
             reservationDetails.innerHTML = `
                 <div class="success-message">
                     <p>Votre réservation a été enregistrée avec succès!</p>
-                    <p>Un email de confirmation a été envoyé à ${chambre.reservePar.email}.</p>
+                    ${emailMessage}
                 </div>
+                ${warningHtml}
                 <div class="reservation-summary">
                     <p><strong>Réservé par:</strong> ${chambre.reservePar.prenom} ${chambre.reservePar.nom}</p>
                     <p><strong>Email:</strong> ${chambre.reservePar.email}</p>
@@ -919,10 +976,60 @@
             document.getElementById('newReservationBtn').addEventListener('click', resetApplication);
         }
         
-        // Function to simulate sending a confirmation email
-        function envoyerEmailConfirmation(chambre) {
-            console.log(`Email de confirmation envoyé à ${chambre.reservePar.email} pour la chambre ${chambre.roomNumber}`);
-            // In a real application, this would connect to an email service
+        // Fonction pour simuler l'envoi d'un email de confirmation
+        async function envoyerEmailConfirmation(chambre) {
+            try {
+                // Récupérer les informations de la réservation
+                const email = chambre.reservePar.email;
+                const nom = chambre.reservePar.nom;
+                const prenom = chambre.reservePar.prenom;
+                const roomNumber = chambre.roomNumber;
+                const bedType = chambre.bedType;
+                const autresOccupants = chambre.autresOccupants.join(', ');
+                
+                console.log(`Email de confirmation envoyé à ${email} pour la chambre ${roomNumber}`);
+                
+                // Utiliser EmailJS pour envoyer un véritable email (si configuré)
+                if (typeof emailjs !== 'undefined') {
+                    // Créer un template de données pour EmailJS
+                    const templateParams = {
+                        to_email: email,
+                        to_name: `${prenom} ${nom}`,
+                        room_number: roomNumber,
+                        bed_type: bedType,
+                        occupants: autresOccupants,
+                        message: `Votre réservation pour la chambre ${roomNumber} a été confirmée.`
+                    };
+                    
+                    // Envoyer l'email
+                    try {
+                        await emailjs.send('service_mariage', 'template_reservation', templateParams);
+                        console.log('Email envoyé avec succès!');
+                        return true;
+                    } catch (error) {
+                        console.error('Erreur lors de l\'envoi de l\'email:', error);
+                        // L'échec de l'envoi d'email n'est pas critique, on continue
+                        return false;
+                    }
+                } else {
+                    // Charger dynamiquement EmailJS si pas déjà chargé
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+                    script.onload = function() {
+                        // Initialiser EmailJS avec votre User ID
+                        emailjs.init("YOUR_USER_ID"); // Remplacez par votre ID utilisateur EmailJS
+                        
+                        // On n'envoie pas l'email ici, mais on pourrait implémenter cela plus tard
+                        console.log("EmailJS chargé, mais pas configuré avec un ID valide");
+                    };
+                    document.head.appendChild(script);
+                    
+                    return false;
+                }
+            } catch (error) {
+                console.error("Erreur lors de la préparation de l'email:", error);
+                return false;
+            }
         }
         
         // Function to reset the application for a new reservation
@@ -1188,6 +1295,11 @@
             refreshButton.style.right = '10px';
             refreshButton.style.zIndex = '1000';
             refreshButton.addEventListener('click', loadData);
+            adminSection.appendChild(refreshButton);
+            
+            // Hide loading once Firebase is initialized
+            setTimeout(hideLoading, 3000); // Give it a few seconds to initialize Firebase
+        });
             document.body.appendChild(refreshButton);
             
             // Init database button (admin use)
