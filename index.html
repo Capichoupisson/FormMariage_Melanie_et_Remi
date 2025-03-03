@@ -21,29 +21,31 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: #f8f4e9; /* Fond crème automnal */
+            color: #5d4037; /* Marron foncé pour le texte */
         }
         
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background-color: white;
+            background-color: #fff9e6; /* Fond beige clair */
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(121, 85, 72, 0.2);
+            border-left: 4px solid #d7a367; /* Bordure dorée */
         }
         
         h1, h2 {
-            color: #2c3e50;
+            color: #a04b2d; /* Rouge-brun automnal */
             text-align: center;
         }
         
         .user-form {
             margin-bottom: 30px;
             padding: 15px;
-            background-color: #f9f9f9;
+            background-color: rgba(222, 184, 135, 0.1); /* Beige transparent */
             border-radius: 4px;
+            border-left: 3px solid #c68642; /* Brun doré */
         }
         
         .form-group {
@@ -54,32 +56,35 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            color: #7d5a44; /* Brun moyen */
         }
         
         input, select {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid #d9b78c; /* Beige doré */
             border-radius: 4px;
             box-sizing: border-box;
+            background-color: #fff9f0; /* Blanc légèrement chaud */
         }
         
         button {
-            background-color: #3498db;
+            background-color: #b26b46; /* Orange-brun */
             color: white;
             border: none;
             padding: 10px 15px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
         
         button:hover {
-            background-color: #2980b9;
+            background-color: #99512e; /* Plus foncé au survol */
         }
         
         button:disabled {
-            background-color: #cccccc;
+            background-color: #d5c5b5; /* Beige grisé */
             cursor: not-allowed;
         }
         
@@ -91,25 +96,26 @@
         }
         
         .room-card {
-            border: 1px solid #ddd;
+            border: 1px solid #d9b78c;
             border-radius: 4px;
             padding: 15px;
-            background-color: white;
-            transition: transform 0.2s;
+            background-color: #fff9e6;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         
         .room-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(121, 85, 72, 0.3);
         }
         
         .room-card.selected {
-            border: 2px solid #3498db;
-            background-color: #ebf5fb;
+            border: 2px solid #c68642;
+            background-color: rgba(214, 184, 147, 0.2);
         }
         
         .room-info {
             margin-bottom: 10px;
+            color: #5d4037;
         }
         
         .hidden {
@@ -119,26 +125,29 @@
         .guests-form {
             margin-top: 20px;
             padding: 15px;
-            background-color: #f9f9f9;
+            background-color: rgba(222, 184, 135, 0.1);
             border-radius: 4px;
+            border-left: 3px solid #c68642;
         }
         
         .success-message {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #e8f1d5; /* Vert automnal très clair */
+            color: #4c6228; /* Vert forêt */
             padding: 15px;
             border-radius: 4px;
             margin-top: 20px;
             text-align: center;
+            border-left: 3px solid #6c8542; /* Vert olive */
         }
         
         .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: #f6dfd1; /* Pêche clair */
+            color: #a04b2d; /* Rouge-brun */
             padding: 15px;
             border-radius: 4px;
             margin-top: 20px;
             text-align: center;
+            border-left: 3px solid #a04b2d;
         }
         
         .admin-table {
@@ -148,17 +157,30 @@
         }
         
         .admin-table th, .admin-table td {
-            border: 1px solid #ddd;
+            border: 1px solid #d9b78c;
             padding: 8px;
             text-align: left;
         }
         
         .admin-table th {
-            background-color: #f2f2f2;
+            background-color: #e6d7c0; /* Beige moyen */
+            color: #7d5a44;
         }
         
         .admin-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: rgba(222, 184, 135, 0.1);
+        }
+        
+        .admin-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .admin-buttons button {
+            flex: 1;
+            min-width: 150px;
         }
         
         .modal {
@@ -170,20 +192,21 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(77, 54, 41, 0.4); /* Fond brun transparent */
         }
         
         .modal-content {
-            background-color: #fefefe;
+            background-color: #fff9e6;
             margin: 15% auto;
             padding: 20px;
-            border: 1px solid #888;
+            border: 1px solid #c68642;
             width: 300px;
             border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(121, 85, 72, 0.4);
         }
         
         .close {
-            color: #aaa;
+            color: #a04b2d;
             float: right;
             font-size: 28px;
             font-weight: bold;
@@ -191,13 +214,68 @@
         }
         
         .close:hover {
-            color: black;
+            color: #823c22;
         }
         
         .admin-link {
             text-align: center;
             margin-top: 30px;
             font-size: 14px;
+        }
+        
+        .admin-link a {
+            color: #a04b2d;
+            text-decoration: none;
+            border-bottom: 1px dotted #a04b2d;
+        }
+        
+        .admin-link a:hover {
+            color: #823c22;
+            border-bottom: 1px solid #823c22;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(248, 244, 233, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            border: 16px solid #e6d7c0;
+            border-top: 16px solid #b26b46;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .reset-room-btn {
+            background-color: #d05c46; /* Rouge-orange plus vif */
+        }
+        
+        .reset-room-btn:hover {
+            background-color: #b24c37;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7d5a44;
+            font-size: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #d9b78c;
         }
     </style>
 </head>
@@ -265,8 +343,13 @@
     <!-- Admin section -->
     <div id="adminSection" class="container hidden">
         <h1>Administration des réservations</h1>
-        <button id="exportBtn">Exporter les données (CSV)</button>
-        <button id="backToMainBtn">Retour à la page principale</button>
+        
+        <div class="admin-buttons">
+            <button id="exportBtn">Exporter les données (CSV)</button>
+            <button id="initDatabaseBtn" class="reset-room-btn">Initialiser la base de données</button>
+            <button id="backToMainBtn">Retour à la page principale</button>
+        </div>
+        
         <div id="adminRoomList">
             <table class="admin-table">
                 <thead>
@@ -282,6 +365,10 @@
                 </thead>
                 <tbody id="adminRoomTable"></tbody>
             </table>
+        </div>
+        
+        <div class="footer">
+            Système de gestion de réservation pour mariage
         </div>
     </div>
     
