@@ -8,6 +8,7 @@ default: &quot;bg-gray-900 text-white hover:bg-gray-700&quot;,
 destructive: &quot;bg-red-500 text-white hover:bg-red-600&quot;,
 outline: &quot;border border-gray-200 bg-white hover:bg-gray-100 hover:text-gray-900&quot;,
 secondary: &quot;bg-gray-100 text-gray-900 hover:bg-gray-200&quot;,
+
 ghost: &quot;hover:bg-gray-100 hover:text-gray-900&quot;,
 link: &quot;underline-offset-4 hover:underline text-gray-900&quot;
 };
