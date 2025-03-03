@@ -6,15 +6,6 @@
     <title>Réservation de Chambre - Mariage</title>
     <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💍</text></svg>" type="image/svg+xml">
     
-    <!-- Inclusion d'EmailJS pour les emails réels -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        (function() {
-            // Remplacez par votre User ID EmailJS
-            emailjs.init("YOUR_USER_ID");
-        })();
-    </script>
-    
     <!-- Fallback options for database storage -->
     <script>
         function fallbackToServerless() {
@@ -215,8 +206,14 @@
         }
         
         .close {
-            color: #a04b2d;
-            float: right;
+            text-decoration: none;
+            border-bottom: 1px dotted #a04b2d;
+        }
+        
+        .admin-link a:hover {
+            color: #823c22;
+            border-bottom: 1px solid #823c22;
+        }float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -235,6 +232,99 @@
         .admin-link a {
             color: #a04b2d;
             text-decoration: none;
+            border-bottom: 1px dotted #a04b2d;
+        }
+        
+        .admin-link a:hover {
+            color: #823c22;
+            border-bottom: 1px solid #823c22;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(248, 244, 233, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            border: 16px solid #e6d7c0;
+            border-top: 16px solid #b26b46;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .reset-room-btn {
+            background-color: #d05c46; /* Rouge-orange plus vif */
+        }
+        
+        .reset-room-btn:hover {
+            background-color: #b24c37;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7d5a44;
+            font-size: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #d9b78c;
+        }
+        
+        .reservation-summary {
+            background-color: #fff9f0;
+            border: 1px solid #d9b78c;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        /* Styles pour l'impression */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+                padding: 10px;
+            }
+            
+            button, .admin-link, .footer, #newReservationBtn, #printConfirmationBtn {
+                display: none;
+            }
+            
+            .success-message {
+                background-color: white;
+                border: 1px solid #333;
+                color: black;
+            }
+            
+            .reservation-summary {
+                border: 1px solid #333;
+                background-color: white;
+            }
+        }
+    </style>text-decoration: none;
             border-bottom: 1px dotted #a04b2d;
         }
         
@@ -902,15 +992,15 @@
                 // Save to Firestore and localStorage
                 const success = await saveData();
                 
+                // Enregistrer les détails de la réservation (pour référence)
+                enregistrerReservation(chambres[roomIndex]);
+                
                 if (success) {
-                    // Send confirmation email
-                    const emailSent = await envoyerEmailConfirmation(chambres[roomIndex]);
-                    
                     // Show confirmation
-                    afficherConfirmation(chambres[roomIndex], emailSent);
+                    afficherConfirmation(chambres[roomIndex]);
                 } else {
                     // En cas d'échec de sauvegarde, afficher quand même la confirmation mais avec avertissement
-                    afficherConfirmation(chambres[roomIndex], false, "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
+                    afficherConfirmation(chambres[roomIndex], "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
                 }
             } else {
                 hideLoading();
@@ -919,7 +1009,7 @@
         }
         
         // Function to display the confirmation
-        function afficherConfirmation(chambre, emailSent = true, warningMessage = null) {
+        function afficherConfirmation(chambre, warningMessage = null) {
             hideLoading(); // Cacher le loader
             
             document.getElementById('roomSection').classList.add('hidden');
@@ -938,14 +1028,6 @@
                 occupantsHtml += '</ul>';
             }
             
-            // Message concernant l'email
-            let emailMessage = '';
-            if (emailSent) {
-                emailMessage = `<p>Un email de confirmation a été envoyé à ${chambre.reservePar.email}.</p>`;
-            } else {
-                emailMessage = `<p>L'envoi de l'email de confirmation à ${chambre.reservePar.email} a échoué. Veuillez contacter les organisateurs si nécessaire.</p>`;
-            }
-            
             // Message d'avertissement si présent
             let warningHtml = '';
             if (warningMessage) {
@@ -959,7 +1041,7 @@
             reservationDetails.innerHTML = `
                 <div class="success-message">
                     <p>Votre réservation a été enregistrée avec succès!</p>
-                    ${emailMessage}
+                    <p>Veuillez conserver cette page de confirmation ou prendre une capture d'écran.</p>
                 </div>
                 ${warningHtml}
                 <div class="reservation-summary">
@@ -971,65 +1053,19 @@
                     ${occupantsHtml}
                 </div>
                 <button id="newReservationBtn">Faire une nouvelle réservation</button>
+                <button id="printConfirmationBtn" style="margin-left: 10px; background-color: #7d5a44;">Imprimer la confirmation</button>
             `;
             
             document.getElementById('newReservationBtn').addEventListener('click', resetApplication);
+            document.getElementById('printConfirmationBtn').addEventListener('click', function() {
+                window.print();
+            });
         }
         
-        // Fonction pour simuler l'envoi d'un email de confirmation
-        async function envoyerEmailConfirmation(chambre) {
-            try {
-                // Récupérer les informations de la réservation
-                const email = chambre.reservePar.email;
-                const nom = chambre.reservePar.nom;
-                const prenom = chambre.reservePar.prenom;
-                const roomNumber = chambre.roomNumber;
-                const bedType = chambre.bedType;
-                const autresOccupants = chambre.autresOccupants.join(', ');
-                
-                console.log(`Email de confirmation envoyé à ${email} pour la chambre ${roomNumber}`);
-                
-                // Utiliser EmailJS pour envoyer un véritable email (si configuré)
-                if (typeof emailjs !== 'undefined') {
-                    // Créer un template de données pour EmailJS
-                    const templateParams = {
-                        to_email: email,
-                        to_name: `${prenom} ${nom}`,
-                        room_number: roomNumber,
-                        bed_type: bedType,
-                        occupants: autresOccupants,
-                        message: `Votre réservation pour la chambre ${roomNumber} a été confirmée.`
-                    };
-                    
-                    // Envoyer l'email
-                    try {
-                        await emailjs.send('service_mariage', 'template_reservation', templateParams);
-                        console.log('Email envoyé avec succès!');
-                        return true;
-                    } catch (error) {
-                        console.error('Erreur lors de l\'envoi de l\'email:', error);
-                        // L'échec de l'envoi d'email n'est pas critique, on continue
-                        return false;
-                    }
-                } else {
-                    // Charger dynamiquement EmailJS si pas déjà chargé
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-                    script.onload = function() {
-                        // Initialiser EmailJS avec votre User ID
-                        emailjs.init("YOUR_USER_ID"); // Remplacez par votre ID utilisateur EmailJS
-                        
-                        // On n'envoie pas l'email ici, mais on pourrait implémenter cela plus tard
-                        console.log("EmailJS chargé, mais pas configuré avec un ID valide");
-                    };
-                    document.head.appendChild(script);
-                    
-                    return false;
-                }
-            } catch (error) {
-                console.error("Erreur lors de la préparation de l'email:", error);
-                return false;
-            }
+        // Fonction pour enregistrer les détails de la réservation (sans envoi d'email)
+        function enregistrerReservation(chambre) {
+            console.log(`Réservation enregistrée pour ${chambre.reservePar.prenom} ${chambre.reservePar.nom} (${chambre.reservePar.email}) - Chambre ${chambre.roomNumber}`);
+            return true;
         }
         
         // Function to reset the application for a new reservation
