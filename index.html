@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Réservation de Chambre - Mariage</title>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💍</text></svg>" type="image/svg+xml">
+    <!-- Fallback options for database storage -->
+    <script>
+        function fallbackToServerless() {
+            // Use GitHub as serverless backend
+            // This can be used later as an alternative to Firebase
+            const useServerless = false;
+            return useServerless;
+        }
+    </script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -316,23 +327,247 @@
         let selectedRoom = null;
         let chambres = [];
         
-        // Load data from localStorage or initialize
-        function loadData() {
+        // Firebase configuration - vos informations spécifiques
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9VYqm_OBfrepPMWgo7dKGlpWsrl0zCUU",
+            authDomain: "formmariage.firebaseapp.com",
+            projectId: "formmariage",
+            storageBucket: "formmariage.firebasestorage.app",
+            messagingSenderId: "1028876338505",
+            appId: "1:1028876338505:web:dc28ba621ef95539a78698"
+        };
+        
+        // Chargement des scripts Firebase (version moderne)
+        let db;
+        
+        function loadFirebaseScripts() {
+            return new Promise((resolve, reject) => {
+                // Charger le script principal Firebase app
+                const appScript = document.createElement('script');
+                appScript.src = 'https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js';
+                appScript.type = 'module';
+                
+                // Charger le script Firestore
+                const firestoreScript = document.createElement('script');
+                firestoreScript.src = 'https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js';
+                firestoreScript.type = 'module';
+                
+                // Attendre que les scripts soient chargés
+                appScript.onload = () => {
+                    firestoreScript.onload = () => {
+                        resolve();
+                    };
+                    firestoreScript.onerror = reject;
+                    document.head.appendChild(firestoreScript);
+                };
+                appScript.onerror = reject;
+                document.head.appendChild(appScript);
+            });
+        }
+        
+        // Initialiser Firebase
+        async function initFirebase() {
+            try {
+                // Fallback vers la version compat si les modules échouent
+                await loadFirebaseScripts();
+                
+                // Initialisation avec import dynamique
+                const firebaseApp = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js');
+                const firebaseFirestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
+                
+                // Initialiser l'application
+                const app = firebaseApp.initializeApp(firebaseConfig);
+                db = firebaseFirestore.getFirestore(app);
+                
+                console.log("Firebase initialized successfully (module version)");
+                loadData();
+            } catch (error) {
+                console.error("Error initializing Firebase module version:", error);
+                
+                // Fallback vers la version compat
+                console.log("Trying compat version as fallback...");
+                try {
+                    // Charger les scripts compat
+                    await new Promise((resolve) => {
+                        const compatAppScript = document.createElement('script');
+                        compatAppScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js';
+                        
+                        const compatFirestoreScript = document.createElement('script');
+                        compatFirestoreScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js';
+                        
+                        compatAppScript.onload = () => {
+                            document.head.appendChild(compatFirestoreScript);
+                            compatFirestoreScript.onload = resolve;
+                        };
+                        
+                        document.head.appendChild(compatAppScript);
+                    });
+                    
+                    // Initialiser avec la version compat
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    console.log("Firebase initialized successfully (compat version)");
+                    loadData();
+                } catch (compatError) {
+                    console.error("Error with compat version:", compatError);
+                    alert("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
+                    
+                    // Fallback vers localStorage
+                    console.log("Using localStorage as final fallback");
+                    loadLocalData();
+                }
+            }
+        }
+        
+        // Charger depuis localStorage (fallback)
+        function loadLocalData() {
             const savedChambres = localStorage.getItem('chambres');
             if (savedChambres) {
                 chambres = JSON.parse(savedChambres);
             } else {
-                // Initialize rooms from dbChambresInitiales
                 chambres = dbChambresInitiales.map(room => 
                     new Chambre(room.roomNumber, room.bedType, room.capacity)
                 );
-                saveData();
+                localStorage.setItem('chambres', JSON.stringify(chambres));
+            }
+            
+            // Mettre à jour l'interface si nécessaire
+            if (document.getElementById('roomList').innerHTML !== '') {
+                afficherChambresDisponibles();
+            }
+            if (document.getElementById('adminRoomTable').innerHTML !== '') {
+                loadAdminRoomTable();
+            }
+            
+            // Cacher l'indicateur de chargement
+            hideLoading();
+        }
+        
+        // Fonction pour charger les données depuis Firestore
+        async function loadData() {
+            try {
+                // Vérifier si nous utilisons la version module ou compat
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    // Version compat
+                    console.log("Using compat version for data loading");
+                    const querySnapshot = await db.collection("chambres").get();
+                    
+                    if (querySnapshot.size > 0) {
+                        chambres = [];
+                        querySnapshot.forEach((doc) => {
+                            chambres.push(doc.data());
+                        });
+                        console.log("Rooms loaded from Firestore (compat):", chambres.length);
+                    } else {
+                        console.log("No rooms found, initializing from default data (compat)");
+                        chambres = dbChambresInitiales.map(room => 
+                            new Chambre(room.roomNumber, room.bedType, room.capacity)
+                        );
+                        await saveData();
+                    }
+                } else {
+                    // Version module
+                    console.log("Using module version for data loading");
+                    const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
+                    
+                    const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                    
+                    if (!querySnapshot.empty) {
+                        chambres = [];
+                        querySnapshot.forEach((doc) => {
+                            chambres.push(doc.data());
+                        });
+                        console.log("Rooms loaded from Firestore (module):", chambres.length);
+                    } else {
+                        console.log("No rooms found, initializing from default data (module)");
+                        chambres = dbChambresInitiales.map(room => 
+                            new Chambre(room.roomNumber, room.bedType, room.capacity)
+                        );
+                        await saveData();
+                    }
+                }
+                
+                // Mise à jour de l'interface si nécessaire
+                if (document.getElementById('roomList').innerHTML !== '') {
+                    afficherChambresDisponibles();
+                }
+                if (document.getElementById('adminRoomTable').innerHTML !== '') {
+                    loadAdminRoomTable();
+                }
+                
+                // Cacher l'indicateur de chargement
+                hideLoading();
+                
+            } catch (error) {
+                console.error("Error loading rooms:", error);
+                
+                // Fallback vers localStorage
+                loadLocalData();
             }
         }
         
-        // Save data to localStorage
-        function saveData() {
+        // Fonction pour sauvegarder les données dans Firestore
+        async function saveData() {
+            // D'abord, sauvegarder dans localStorage comme backup
             localStorage.setItem('chambres', JSON.stringify(chambres));
+            
+            try {
+                // Vérifier si nous utilisons la version module ou compat
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    // Version compat
+                    console.log("Using compat version for data saving");
+                    
+                    const batch = db.batch();
+                    
+                    // Récupérer tous les documents existants
+                    const querySnapshot = await db.collection("chambres").get();
+                    
+                    // Supprimer tous les documents existants
+                    querySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    // Ajouter toutes les chambres actuelles
+                    chambres.forEach((chambre) => {
+                        const docRef = db.collection("chambres").doc(chambre.roomNumber.toString());
+                        batch.set(docRef, chambre);
+                    });
+                    
+                    // Exécuter le batch
+                    await batch.commit();
+                    console.log("Database updated successfully (compat)");
+                    
+                } else {
+                    // Version module
+                    console.log("Using module version for data saving");
+                    const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
+                    
+                    // Créer une transaction pour mettre à jour la base de données
+                    const batch = firestore.writeBatch(db);
+                    
+                    // Récupérer tous les documents existants
+                    const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                    
+                    // Supprimer tous les documents existants
+                    querySnapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    // Ajouter toutes les chambres actuelles
+                    chambres.forEach((chambre) => {
+                        const docRef = firestore.doc(db, "chambres", chambre.roomNumber.toString());
+                        batch.set(docRef, chambre);
+                    });
+                    
+                    // Exécuter le batch
+                    await batch.commit();
+                    console.log("Database updated successfully (module)");
+                }
+                
+            } catch (error) {
+                console.error("Error updating database:", error);
+                alert("Les données ont été sauvegardées localement, mais pas synchronisées avec le serveur.");
+            }
         }
         
         // Function to create a new user
@@ -650,9 +885,50 @@
             document.body.removeChild(link);
         }
         
+        // Show loading indicator
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.style.position = 'fixed';
+            loadingDiv.style.top = '0';
+            loadingDiv.style.left = '0';
+            loadingDiv.style.width = '100%';
+            loadingDiv.style.height = '100%';
+            loadingDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+            loadingDiv.style.display = 'flex';
+            loadingDiv.style.justifyContent = 'center';
+            loadingDiv.style.alignItems = 'center';
+            loadingDiv.style.zIndex = '9999';
+            
+            const spinner = document.createElement('div');
+            spinner.style.border = '16px solid #f3f3f3';
+            spinner.style.borderTop = '16px solid #3498db';
+            spinner.style.borderRadius = '50%';
+            spinner.style.width = '120px';
+            spinner.style.height = '120px';
+            spinner.style.animation = 'spin 2s linear infinite';
+            
+            const styleElement = document.createElement('style');
+            styleElement.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            
+            document.head.appendChild(styleElement);
+            loadingDiv.appendChild(spinner);
+            document.body.appendChild(loadingDiv);
+        }
+        
+        function hideLoading() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
+
         // Initialize the application
         function initApp() {
-            loadData();
+            showLoading();
+            
+            // Initialize Firebase
+            initFirebase();
             
             // User info form
             document.getElementById('userInfoBtn').addEventListener('click', function() {
@@ -694,6 +970,19 @@
                     hideAdminModal();
                 }
             });
+            
+            // Refresh data button (for testing)
+            const refreshButton = document.createElement('button');
+            refreshButton.innerText = 'Actualiser les données';
+            refreshButton.style.position = 'fixed';
+            refreshButton.style.bottom = '10px';
+            refreshButton.style.right = '10px';
+            refreshButton.style.zIndex = '1000';
+            refreshButton.addEventListener('click', loadData);
+            document.body.appendChild(refreshButton);
+            
+            // Hide loading once Firebase is initialized
+            setTimeout(hideLoading, 3000); // Give it a few seconds to initialize Firebase
         }
         
         // Run the app
