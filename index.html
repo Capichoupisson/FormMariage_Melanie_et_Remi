@@ -15,6 +15,14 @@
             return useServerless;
         }
     </script>
+    <script>
+        function fallbackToServerless() {
+            // Use GitHub as serverless backend
+            // This can be used later as an alternative to Firebase
+            const useServerless = false;
+            return useServerless;
+        }
+    </script>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -379,7 +387,8 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Container principal -->
+    <div class="container" id="mainContainer">
         <h1>Réservation de Chambre - Mariage</h1>
         
         <!-- Message d'initialisation -->
@@ -564,54 +573,67 @@
         // Initialiser Firebase
         async function initFirebase() {
             try {
+                console.log("Initialisation de Firebase...");
+                
                 // Fallback vers la version compat si les modules échouent
-                await loadFirebaseScripts();
-                
-                // Initialisation avec import dynamique
-                const firebaseApp = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js');
-                const firebaseFirestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
-                
-                // Initialiser l'application
-                const app = firebaseApp.initializeApp(firebaseConfig);
-                db = firebaseFirestore.getFirestore(app);
-                
-                console.log("Firebase initialized successfully (module version)");
-                loadData();
-            } catch (error) {
-                console.error("Error initializing Firebase module version:", error);
-                
-                // Fallback vers la version compat
-                console.log("Trying compat version as fallback...");
                 try {
-                    // Charger les scripts compat
-                    await new Promise((resolve) => {
-                        const compatAppScript = document.createElement('script');
-                        compatAppScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js';
-                        
-                        const compatFirestoreScript = document.createElement('script');
-                        compatFirestoreScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js';
-                        
-                        compatAppScript.onload = () => {
-                            document.head.appendChild(compatFirestoreScript);
-                            compatFirestoreScript.onload = resolve;
-                        };
-                        
-                        document.head.appendChild(compatAppScript);
-                    });
+                    // Initialisation avec import dynamique
+                    const firebaseApp = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js');
+                    const firebaseFirestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
                     
-                    // Initialiser avec la version compat
-                    firebase.initializeApp(firebaseConfig);
-                    db = firebase.firestore();
-                    console.log("Firebase initialized successfully (compat version)");
-                    loadData();
-                } catch (compatError) {
-                    console.error("Error with compat version:", compatError);
-                    alert("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
+                    // Initialiser l'application
+                    const app = firebaseApp.initializeApp(firebaseConfig);
+                    db = firebaseFirestore.getFirestore(app);
                     
-                    // Fallback vers localStorage
-                    console.log("Using localStorage as final fallback");
-                    loadLocalData();
+                    console.log("Firebase initialized successfully (module version)");
+                    const success = await loadData();
+                    if (!success) {
+                        throw new Error("Échec du chargement des données");
+                    }
+                } catch (error) {
+                    console.error("Error initializing Firebase module version:", error);
+                    
+                    // Fallback vers la version compat
+                    console.log("Trying compat version as fallback...");
+                    try {
+                        // Charger les scripts compat
+                        await new Promise((resolve, reject) => {
+                            const compatAppScript = document.createElement('script');
+                            compatAppScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js';
+                            compatAppScript.onerror = reject;
+                            
+                            const compatFirestoreScript = document.createElement('script');
+                            compatFirestoreScript.src = 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js';
+                            compatFirestoreScript.onerror = reject;
+                            
+                            compatAppScript.onload = () => {
+                                document.head.appendChild(compatFirestoreScript);
+                                compatFirestoreScript.onload = resolve;
+                            };
+                            
+                            document.head.appendChild(compatAppScript);
+                        });
+                        
+                        // Initialiser avec la version compat
+                        firebase.initializeApp(firebaseConfig);
+                        db = firebase.firestore();
+                        console.log("Firebase initialized successfully (compat version)");
+                        await loadData();
+                    } catch (compatError) {
+                        console.error("Error with compat version:", compatError);
+                        throw new Error("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
+                    }
                 }
+            } catch (mainError) {
+                console.error("Fatal error initializing Firebase:", mainError);
+                alert("Impossible de se connecter à la base de données. Utilisation du mode hors ligne.");
+                
+                // Fallback vers localStorage
+                console.log("Using localStorage as final fallback");
+                loadLocalData();
+            } finally {
+                // Toujours masquer le chargement, quelle que soit l'issue
+                hideLoading();
             }
         }
         
@@ -648,31 +670,41 @@
                 if (typeof firebase !== 'undefined' && firebase.firestore) {
                     // Version compat
                     console.log("Using compat version for data loading");
-                    const querySnapshot = await db.collection("chambres").get();
-                    
-                    if (querySnapshot.size > 0) {
-                        chambres = [];
-                        querySnapshot.forEach((doc) => {
-                            chambres.push(doc.data());
-                        });
-                        console.log("Rooms loaded from Firestore (compat):", chambres.length);
-                        chambresTrouvees = true;
+                    try {
+                        const querySnapshot = await db.collection("chambres").get();
+                        
+                        if (querySnapshot.size > 0) {
+                            chambres = [];
+                            querySnapshot.forEach((doc) => {
+                                chambres.push(doc.data());
+                            });
+                            console.log("Rooms loaded from Firestore (compat):", chambres.length);
+                            chambresTrouvees = true;
+                        }
+                    } catch (error) {
+                        console.error("Error loading data with compat version:", error);
+                        throw error; // Relancer pour le traitement d'erreur
                     }
                 } else {
                     // Version module
                     console.log("Using module version for data loading");
-                    const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
-                    
-                    const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
-                    const docsArray = [];
-                    querySnapshot.forEach((doc) => {
-                        docsArray.push(doc.data());
-                    });
-                    
-                    if (docsArray.length > 0) {
-                        chambres = docsArray;
-                        console.log("Rooms loaded from Firestore (module):", chambres.length);
-                        chambresTrouvees = true;
+                    try {
+                        const firestore = await import('https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js');
+                        
+                        const querySnapshot = await firestore.getDocs(firestore.collection(db, "chambres"));
+                        const docsArray = [];
+                        querySnapshot.forEach((doc) => {
+                            docsArray.push(doc.data());
+                        });
+                        
+                        if (docsArray.length > 0) {
+                            chambres = docsArray;
+                            console.log("Rooms loaded from Firestore (module):", chambres.length);
+                            chambresTrouvees = true;
+                        }
+                    } catch (error) {
+                        console.error("Error loading data with module version:", error);
+                        throw error; // Relancer pour le traitement d'erreur
                     }
                 }
                 
@@ -687,26 +719,34 @@
                     console.log("Initialized", chambres.length, "rooms from default data");
                     
                     // Sauvegarder les chambres initiales dans Firestore
-                    await saveData();
-                    console.log("Initial rooms saved to Firestore");
+                    try {
+                        await saveData();
+                        console.log("Initial rooms saved to Firestore");
+                    } catch (saveError) {
+                        console.error("Error saving initial data:", saveError);
+                        // On continue malgré l'erreur de sauvegarde initiale
+                    }
                 }
                 
                 // Mise à jour de l'interface si nécessaire
-                if (document.getElementById('roomList').innerHTML !== '') {
+                if (document.getElementById('roomList') && document.getElementById('roomList').innerHTML !== '') {
                     afficherChambresDisponibles();
                 }
-                if (document.getElementById('adminRoomTable').innerHTML !== '') {
+                if (document.getElementById('adminRoomTable') && document.getElementById('adminRoomTable').innerHTML !== '') {
                     loadAdminRoomTable();
                 }
                 
                 // Cacher l'indicateur de chargement
                 hideLoading();
                 
+                return true;
+                
             } catch (error) {
                 console.error("Error loading rooms:", error);
                 
                 // Fallback vers localStorage
                 loadLocalData();
+                return false;
             }
         }
         
@@ -978,33 +1018,39 @@
             
             showLoading(); // Afficher l'indicateur de chargement
             
-            // Get all other occupants
-            const occupantInputs = document.querySelectorAll('.occupant-input');
-            const autresOccupants = Array.from(occupantInputs).map(input => input.value.trim());
-            
-            // Find the room in the database and update it
-            const roomIndex = chambres.findIndex(chambre => chambre.roomNumber === selectedRoom.roomNumber);
-            if (roomIndex !== -1) {
-                chambres[roomIndex].reservePar = currentUser;
-                chambres[roomIndex].autresOccupants = autresOccupants;
-                chambres[roomIndex].disponibilite = false;
+            try {
+                // Get all other occupants
+                const occupantInputs = document.querySelectorAll('.occupant-input');
+                const autresOccupants = Array.from(occupantInputs).map(input => input.value.trim());
                 
-                // Save to Firestore and localStorage
-                const success = await saveData();
-                
-                // Enregistrer les détails de la réservation (pour référence)
-                enregistrerReservation(chambres[roomIndex]);
-                
-                if (success) {
-                    // Show confirmation
-                    afficherConfirmation(chambres[roomIndex]);
+                // Find the room in the database and update it
+                const roomIndex = chambres.findIndex(chambre => chambre.roomNumber === selectedRoom.roomNumber);
+                if (roomIndex !== -1) {
+                    chambres[roomIndex].reservePar = currentUser;
+                    chambres[roomIndex].autresOccupants = autresOccupants;
+                    chambres[roomIndex].disponibilite = false;
+                    
+                    // Save to Firestore and localStorage
+                    const success = await saveData();
+                    
+                    // Enregistrer les détails de la réservation (pour référence)
+                    enregistrerReservation(chambres[roomIndex]);
+                    
+                    if (success) {
+                        // Show confirmation
+                        afficherConfirmation(chambres[roomIndex]);
+                    } else {
+                        // En cas d'échec de sauvegarde, afficher quand même la confirmation mais avec avertissement
+                        afficherConfirmation(chambres[roomIndex], "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
+                    }
                 } else {
-                    // En cas d'échec de sauvegarde, afficher quand même la confirmation mais avec avertissement
-                    afficherConfirmation(chambres[roomIndex], "Les données ont été sauvegardées localement, mais la synchronisation avec le serveur a échoué.");
+                    hideLoading();
+                    alert("Erreur: Chambre non trouvée dans la base de données.");
                 }
-            } else {
+            } catch (error) {
+                console.error("Erreur lors de la validation des données:", error);
                 hideLoading();
-                alert("Erreur: Chambre non trouvée dans la base de données.");
+                alert("Une erreur est survenue lors de la validation. Veuillez réessayer.");
             }
         }
         
@@ -1086,29 +1132,60 @@
         
         // Admin functions
         function showAdminModal() {
-            document.getElementById('adminModal').style.display = 'block';
+            console.log("Affichage du modal administrateur");
+            const modal = document.getElementById('adminModal');
+            if (modal) {
+                modal.style.display = 'block';
+            } else {
+                console.error("Modal administrateur non trouvé");
+                alert("Erreur: Modal administrateur non trouvé");
+            }
         }
         
         function hideAdminModal() {
-            document.getElementById('adminModal').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
+            console.log("Fermeture du modal administrateur");
+            const modal = document.getElementById('adminModal');
+            const adminPassword = document.getElementById('adminPassword');
+            
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            if (adminPassword) {
+                adminPassword.value = '';
+            }
         }
         
         function loginAdmin() {
+            console.log("Tentative de connexion administrateur");
             const password = document.getElementById('adminPassword').value;
             if (password === 'M+R') {
+                console.log("Connexion réussie");
                 hideAdminModal();
                 showAdminPanel();
             } else {
+                console.log("Mot de passe incorrect");
                 alert('Mot de passe incorrect.');
             }
         }
         
         function showAdminPanel() {
-            document.querySelector('.container').classList.add('hidden');
-            document.getElementById('adminSection').classList.remove('hidden');
+            console.log("Affichage du panneau administrateur");
+            // Masquer toutes les sections principales
+            const mainContainers = document.querySelectorAll('.container:not(#adminSection)');
+            mainContainers.forEach(container => {
+                container.classList.add('hidden');
+            });
             
-            loadAdminRoomTable();
+            // Afficher la section admin
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection) {
+                adminSection.classList.remove('hidden');
+                loadAdminRoomTable();
+            } else {
+                console.error("Section administrateur non trouvée");
+                alert("Erreur: Section administrateur non trouvée");
+            }
         }
         
         function loadAdminRoomTable() {
@@ -1271,10 +1348,282 @@
 
         // Initialise l'application
         function initApp() {
+            console.log("Initialisation de l'application...");
             showLoading();
             
-            // Initialiser Firebase
-            initFirebase();
+            // Vérifier que les éléments existent avant d'attacher les événements
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    // Initialiser Firebase
+                    initFirebase();
+                    
+                    // Vérifier s'il faut forcer l'initialisation
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('init') && urlParams.get('init') === 'true') {
+                        forceInitDatabase();
+                    }
+                    
+                    // User info form
+                    const userInfoBtn = document.getElementById('userInfoBtn');
+                    if (userInfoBtn) {
+                        userInfoBtn.addEventListener('click', function() {
+                            if (saisieNouvelUtilisateur()) {
+                                document.getElementById('userSection').classList.add('hidden');
+                                document.getElementById('roomSection').classList.remove('hidden');
+                                afficherChambresDisponibles();
+                            }
+                        });
+                        console.log("Événement attaché au bouton userInfoBtn");
+                    } else {
+                        console.error("Bouton userInfoBtn non trouvé dans le DOM");
+                    }
+                    
+                    // Room validation
+                    const validateRoomBtn = document.getElementById('validateRoomBtn');
+                    if (validateRoomBtn) {
+                        validateRoomBtn.addEventListener('click', validerDonnees);
+                        console.log("Événement attaché au bouton validateRoomBtn");
+                    } else {
+                        console.log("Bouton validateRoomBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Admin link
+                    const adminLink = document.getElementById('adminLink');
+                    if (adminLink) {
+                        adminLink.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showAdminModal();
+                        });
+                        console.log("Événement attaché au lien adminLink");
+                    } else {
+                        console.error("Lien adminLink non trouvé dans le DOM");
+                    }
+                    
+                    // Admin modal close button
+                    const closeBtn = document.querySelector('.close');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', hideAdminModal);
+                        console.log("Événement attaché au bouton de fermeture du modal");
+                    } else {
+                        console.error("Bouton close non trouvé dans le DOM");
+                    }
+                    
+                    // Admin login button
+                    const adminLoginBtn = document.getElementById('adminLoginBtn');
+                    if (adminLoginBtn) {
+                        adminLoginBtn.addEventListener('click', loginAdmin);
+                        console.log("Événement attaché au bouton adminLoginBtn");
+                    } else {
+                        console.error("Bouton adminLoginBtn non trouvé dans le DOM");
+                    }
+                    
+                    // Export data button
+                    const exportBtn = document.getElementById('exportBtn');
+                    if (exportBtn) {
+                        exportBtn.addEventListener('click', exportDataToCsv);
+                        console.log("Événement attaché au bouton exportBtn");
+                    } else {
+                        console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Initialize database button (in admin panel)
+                    const initDatabaseBtn = document.getElementById('initDatabaseBtn');
+                    if (initDatabaseBtn) {
+                        initDatabaseBtn.addEventListener('click', function() {
+                            if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
+                                forceInitDatabase();
+                            }
+                        });
+                        console.log("Événement attaché au bouton initDatabaseBtn");
+                    } else {
+                        console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Back to main page button
+                    const backToMainBtn = document.getElementById('backToMainBtn');
+                    if (backToMainBtn) {
+                        backToMainBtn.addEventListener('click', function() {
+                            document.getElementById('adminSection').classList.add('hidden');
+                            const mainContainer = document.querySelector('.container:not(#adminSection)');
+                            if (mainContainer) {
+                                mainContainer.classList.remove('hidden');
+                            }
+                        });
+                        console.log("Événement attaché au bouton backToMainBtn");
+                    } else {
+                        console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Close modal when clicking outside of it
+                    window.addEventListener('click', function(event) {
+                        const modal = document.getElementById('adminModal');
+                        if (modal && event.target === modal) {
+                            hideAdminModal();
+                        }
+                    });
+                    
+                    // Refresh data button (visible uniquement sur la page admin)
+                    const adminSection = document.getElementById('adminSection');
+                    if (adminSection) {
+                        const refreshButton = document.createElement('button');
+                        refreshButton.innerText = 'Actualiser les données';
+                        refreshButton.style.marginTop = '10px';
+                        refreshButton.style.backgroundColor = '#d7a367';
+                        refreshButton.addEventListener('click', loadData);
+                        adminSection.appendChild(refreshButton);
+                        console.log("Bouton d'actualisation ajouté à la section admin");
+                    } else {
+                        console.error("Section admin non trouvée dans le DOM");
+                    }
+                    
+                    console.log("Initialisation des événements terminée");
+                    
+                } catch (error) {
+                    console.error("Erreur lors de l'initialisation de l'application:", error);
+                    alert("Une erreur est survenue lors de l'initialisation. Veuillez rafraîchir la page.");
+                }
+            });
+            
+            // Hide loading after a timeout
+            setTimeout(hideLoading, 5000); // Longer timeout to ensure everything is loaded
+        }
+        
+        // Run the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM chargé, démarrage de l'application");
+            initApp();
+        });
+                    
+                    // Vérifier s'il faut forcer l'initialisation
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('init') && urlParams.get('init') === 'true') {
+                        forceInitDatabase();
+                    }
+                    
+                    // User info form
+                    const userInfoBtn = document.getElementById('userInfoBtn');
+                    if (userInfoBtn) {
+                        userInfoBtn.addEventListener('click', function() {
+                            if (saisieNouvelUtilisateur()) {
+                                document.getElementById('userSection').classList.add('hidden');
+                                document.getElementById('roomSection').classList.remove('hidden');
+                                afficherChambresDisponibles();
+                            }
+                        });
+                        console.log("Événement attaché au bouton userInfoBtn");
+                    } else {
+                        console.error("Bouton userInfoBtn non trouvé dans le DOM");
+                    }
+                    
+                    // Room validation
+                    const validateRoomBtn = document.getElementById('validateRoomBtn');
+                    if (validateRoomBtn) {
+                        validateRoomBtn.addEventListener('click', validerDonnees);
+                        console.log("Événement attaché au bouton validateRoomBtn");
+                    } else {
+                        console.log("Bouton validateRoomBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Admin link
+                    const adminLink = document.getElementById('adminLink');
+                    if (adminLink) {
+                        adminLink.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showAdminModal();
+                        });
+                        console.log("Événement attaché au lien adminLink");
+                    } else {
+                        console.error("Lien adminLink non trouvé dans le DOM");
+                    }
+                    
+                    // Admin modal close button
+                    const closeBtn = document.querySelector('.close');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', hideAdminModal);
+                        console.log("Événement attaché au bouton de fermeture du modal");
+                    } else {
+                        console.error("Bouton close non trouvé dans le DOM");
+                    }
+                    
+                    // Admin login button
+                    const adminLoginBtn = document.getElementById('adminLoginBtn');
+                    if (adminLoginBtn) {
+                        adminLoginBtn.addEventListener('click', loginAdmin);
+                        console.log("Événement attaché au bouton adminLoginBtn");
+                    } else {
+                        console.error("Bouton adminLoginBtn non trouvé dans le DOM");
+                    }
+                    
+                    // Export data button
+                    const exportBtn = document.getElementById('exportBtn');
+                    if (exportBtn) {
+                        exportBtn.addEventListener('click', exportDataToCsv);
+                        console.log("Événement attaché au bouton exportBtn");
+                    } else {
+                        console.log("Bouton exportBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Initialize database button (in admin panel)
+                    const initDatabaseBtn = document.getElementById('initDatabaseBtn');
+                    if (initDatabaseBtn) {
+                        initDatabaseBtn.addEventListener('click', function() {
+                            if (confirm("ATTENTION: Cette action va réinitialiser toutes les réservations. Êtes-vous sûr de vouloir continuer?")) {
+                                forceInitDatabase();
+                            }
+                        });
+                        console.log("Événement attaché au bouton initDatabaseBtn");
+                    } else {
+                        console.log("Bouton initDatabaseBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Back to main page button
+                    const backToMainBtn = document.getElementById('backToMainBtn');
+                    if (backToMainBtn) {
+                        backToMainBtn.addEventListener('click', function() {
+                            document.getElementById('adminSection').classList.add('hidden');
+                            const mainContainer = document.querySelector('.container:not(#adminSection)');
+                            if (mainContainer) {
+                                mainContainer.classList.remove('hidden');
+                            }
+                        });
+                        console.log("Événement attaché au bouton backToMainBtn");
+                    } else {
+                        console.log("Bouton backToMainBtn non trouvé (normal s'il n'est pas encore affiché)");
+                    }
+                    
+                    // Close modal when clicking outside of it
+                    window.addEventListener('click', function(event) {
+                        const modal = document.getElementById('adminModal');
+                        if (modal && event.target === modal) {
+                            hideAdminModal();
+                        }
+                    });
+                    
+                    // Refresh data button (visible uniquement sur la page admin)
+                    const adminSection = document.getElementById('adminSection');
+                    if (adminSection) {
+                        const refreshButton = document.createElement('button');
+                        refreshButton.innerText = 'Actualiser les données';
+                        refreshButton.style.marginTop = '10px';
+                        refreshButton.style.backgroundColor = '#d7a367';
+                        refreshButton.addEventListener('click', loadData);
+                        adminSection.appendChild(refreshButton);
+                        console.log("Bouton d'actualisation ajouté à la section admin");
+                    } else {
+                        console.error("Section admin non trouvée dans le DOM");
+                    }
+                    
+                    console.log("Initialisation des événements terminée");
+                    
+                } catch (error) {
+                    console.error("Erreur lors de l'initialisation de l'application:", error);
+                    alert("Une erreur est survenue lors de l'initialisation. Veuillez rafraîchir la page.");
+                }
+            });
+            
+            // Hide loading after a timeout
+            setTimeout(hideLoading, 5000); // Longer timeout to ensure everything is loaded
+        }
             
             // Vérifier s'il faut forcer l'initialisation
             const urlParams = new URLSearchParams(window.location.search);
