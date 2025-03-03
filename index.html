@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation de chambres - Mariage Mélanie & Rémi</title>
+    <style>
+        /* Styles de base */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #FFF8DC;
+            color: #5E2612;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #8B4513;
+            text-align: center;
+        }
+        
+        .info-box {
+            background-color: #FFF8E5;
+            border-left: 4px solid #A0522D;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        /* Grille des chambres */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .room-card {
+            background-color: #FFF8E5;
+            border-radius: 5px;
+            padding: 15px;
+            cursor: pointer;
+            border-left: 4px solid #DAA520;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .room-card.booked {
+            border-left-color: #8B4513;
+        }
+        
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .room-number {
+            font-weight: bold;
+        }
+        
+        .room-capacity {
+            background-color: #FF8C00;
+            color: white;
+            border-radius: 15px;
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+        
+        .room-type {
+            background-color: #8B4513;
+            color: white;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .room-status {
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .status-available {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        
+        .status-booked {
+            background-color: #FFE5E5;
+            color: #D32F2F;
+            border: 1px solid #FFCDD2;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: #FFF8E5;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #CD853F;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background-color: #8B4513;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #D2691E;
+            color: white;
+        }
+        
+        .btn-cancel {
+            background-color: #9E9E9E;
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: #D32F2F;
+            color: white;
+        }
+        
+        /* Admin */
+        .admin-panel {
+            margin-bottom: 20px;
+        }
+        
+        .admin-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #FFF8E5;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .admin-panel th {
+            background-color: #A0522D;
+            color: white;
+            text-align: left;
+            padding: 10px;
+        }
+        
+        .admin-panel td {
+            padding: 10px;
+            border-bottom: 1px solid #CD853F;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .admin-stats {
+            background-color: #FFF8E5;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Réservation de chambres Château des Broyers<br>
+            <span style="font-size: 0.85em;">Mariage Mélanie & Rémi</span>
+        </h1>
+        
+        <div class="info-box">
+            <p>Cliquez sur l'une des chambres disponibles et remplissez les informations associées.</p>
+            <p>Pour rappel le tarif est de 45€ par personne, petit-déjeuner du dimanche matin inclus.</p>
+            <p>Le règlement se fera directement auprès des mariés.</p>
+            <p>Pour modifier ou annuler une réservation, cliquez sur la chambre concernée.</p>
+        </div>
+        
+        <div id="admin-button-container" style="text-align: right; margin-bottom: 15px;">
+            <button id="admin-button" class="btn btn-primary">Administration</button>
+        </div>
+        
+        <div id="admin-login" style="display: none; margin-bottom: 20px; padding: 15px; border: 1px solid #CD853F; border-radius: 5px;">
+            <h3 style="margin-top: 0;">Connexion Administration</h3>
+            <div class="form-group">
+                <input type="password" id="admin-password" placeholder="Mot de passe">
+            </div>
+            <button id="login-button" class="btn btn-primary">Se connecter</button>
+        </div>
+        
+        <div id="admin-panel" style="display: none;" class="admin-panel"></div>
+        
+        <div id="room-grid" class="room-grid"></div>
+        
+        <div id="booking-modal" class="modal-overlay" style="display: none;"></div>
+        
+        <div class="info-box" style="margin-top: 20px; font-size: 0.9em;">
+            <p>Cliquez sur une chambre disponible pour la réserver</p>
+            <p>Pour modifier ou annuler votre réservation, cliquez sur votre chambre réservée</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #5E2612; opacity: 0.7; font-size: 0.8em;">
+            <p>Château des Broyers - Mariage Mélanie & Rémi</p>
+        </div>
+    </div>
+    
+    <script>
+        // Données des chambres
+        const roomsData = [
+            { roomNumber: 11, bedType: "Double", capacity: 2 },
+            { roomNumber: 12, bedType: "Double", capacity: 2 },
+            { roomNumber: 14, bedType: "Double", capacity: 2 },
+            { roomNumber: 15, bedType: "Double", capacity: 2 },
+            { roomNumber: 16, bedType: "Double", capacity: 2 },
+            { roomNumber: 21, bedType: "Double", capacity: 2 },
+            { roomNumber: 22, bedType: "Double", capacity: 2 },
+            { roomNumber: 36, bedType: "Double", capacity: 2 },
+            { roomNumber: 38, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 39, bedType: "Twin", capacity: 2 },
+            { roomNumber: 40, bedType: "Twin", capacity: 2 },
+            { roomNumber: 41, bedType: "Double", capacity: 2 },
+            { roomNumber: 42, bedType: "Double", capacity: 2 },
+            { roomNumber: 44, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 45, bedType: "Double", capacity: 2 },
+            { roomNumber: 46, bedType: "Double", capacity: 2 },
+            { roomNumber: 48, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 50, bedType: "Avec 5 lits séparés", capacity: 5 }
+        ];
+        
+        // État de l'application
+        let rooms = [];
+        let selectedRoom = null;
+        let editMode = false;
+        let isAdmin = false;
+        
+        // Initialisation
+        function init() {
+            // Récupérer les données sauvegardées
+            const savedRooms = localStorage.getItem('hotelRooms');
+            if (savedRooms) {
+                const parsedRooms = JSON.parse(savedRooms);
+                if (parsedRooms.length !== roomsData.length) {
+                    resetRooms();
+                } else {
+                    rooms = parsedRooms.map(savedRoom => {
+                        const newRoomData = roomsData.find(r => r.roomNumber === savedRoom.roomNumber);
+                        if (newRoomData) {
+                            return {
+                                ...savedRoom,
+                                bedType: newRoomData.bedType,
+                                capacity: newRoomData.capacity
+                            };
+                        }
+                        return savedRoom;
+                    });
+                }
+            } else {
+                resetRooms();
+            }
+            
+            renderRooms();
+            setupEventListeners();
+        }
+        
+        // Réinitialiser les chambres
+        function resetRooms() {
+            rooms = roomsData.map(room => ({
+                ...room,
+                isBooked: false,
+                bookedBy: null,
+                email: null,
+                guests: null,
+                bookingDate: null
+            }));
+            
+            localStorage.setItem('hotelRooms', JSON.stringify(rooms));
+        }
+        
+        // Afficher les chambres
+        function renderRooms() {
+            const roomGridElement = document.getElementById('room-grid');
+            roomGridElement.innerHTML = '';
+            
+            // Trier les chambres par numéro
+            rooms.sort((a, b) => a.roomNumber - b.roomNumber);
+            
+            rooms.forEach(room => {
+                const roomElement = document.createElement('div');
+                roomElement.className = `room-card ${room.isBooked ? 'booked' : ''}`;
+                roomElement.dataset.roomNumber = room.roomNumber;
+                
+                const statusClass = room.isBooked ? 'status-booked' : 'status-available';
+                const statusText = room.isBooked ? 'Réservée' : 'Disponible';
+                
+                roomElement.innerHTML = `
+                    <div class="room-header">
+                        <div class="room-number">Ch. ${room.roomNumber}</div>
+                        <div class="room-capacity">${room.capacity} pers.</div>
+                    </div>
+                    <div class="room-type">${room.bedType}</div>
+                    <div class="room-status ${statusClass}">
+                        ${statusText}
+                        ${room.isBooked ? `<div style="font-size: 12px; margin-top: 5px;">${room.bookedBy}</div>` : ''}
+                    </div>
+                `;
+                
+                roomElement.addEventListener('click', () => handleRoomClick(room));
+                
+                roomGridElement.appendChild(roomElement);
+            });
+        }
+        
+        // Gérer le clic sur une chambre
+        function handleRoomClick(room) {
+            selectedRoom = room;
+            
+            if (!room.isBooked) {
+                showBookingModal(room);
+            } else {
+                showBookedRoomModal(room);
+            }
+        }
+        
+        // Afficher le modal de réservation
+        function showBookingModal(room) {
+            const modalElement = document.getElementById('booking-modal');
+            modalElement.style.display = 'flex';
+            
+            modalElement.innerHTML = `
+                <div class="modal-content">
+                    <h3 style="color: #8B4513; margin-top: 0;">Réserver la Chambre ${room.roomNumber}</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p><strong>Type de lit:</strong> ${room.bedType}</p>
+                        <p><strong>Capacité:</strong> ${room.capacity} ${room.capacity > 1 ? 'personnes' : 'personne'}</p>
+                        <p><strong>Tarif:</strong> ${room.capacity * 45}€ pour la chambre complète</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="booking-name">Nom</label>
+                        <input type="text" id="booking-name" placeholder="Votre nom">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="booking-email">Email</label>
+                        <input type="email" id="booking-email" placeholder="votre@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="booking-guests">Nombre d'invités</label>
+                        <input type="number" id="booking-guests" min="1" max="${room.capacity}" placeholder="1-${room.capacity} personnes">
+                        <div id="guests-error" style="color: #D32F2F; font-size: 12px; margin-top: 5px; display: none;">
+                            Cette chambre ne peut accueillir que ${room.capacity} personnes maximum.
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+                        <button class="btn btn-primary" onclick="bookRoom()">Réserver</button>
+                    </div>
+                </div>
+            `;
+            
+            // Validation du nombre d'invités
+            const guestsInput = document.getElementById('booking-guests');
+            guestsInput.addEventListener('input', () => {
+                const guestsError = document.getElementById('guests-error');
+                if (parseInt(guestsInput.value) > room.capacity) {
+                    guestsError.style.display = 'block';
+                } else {
+                    guestsError.style.display = 'none';
+                }
+            });
+        }
+        
+        // Afficher le modal d'une chambre réservée
+        function showBookedRoomModal(room) {
+            const modalElement = document.getElementById('booking-modal');
+            modalElement.style.display = 'flex';
+            
+            if (editMode) {
+                // Modal de modification
+                modalElement.innerHTML = `
+                    <div class="modal-content">
+                        <h3 style="color: #8B4513; margin-top: 0;">Modifier la réservation - Chambre ${room.roomNumber}</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <p><strong>Type de lit:</strong> ${room.bedType}</p>
+                            <p><strong>Capacité:</strong> ${room.capacity} ${room.capacity > 1 ? 'personnes' : 'personne'}</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-name">Nom</label>
+                            <input type="text" id="edit-name" value="${room.bookedBy}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-email">Email</label>
+                            <input type="email" id="edit-email" value="${room.email}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-guests">Nombre d'invités</label>
+                            <input type="number" id="edit-guests" min="1" max="${room.capacity}" value="${room.guests}">
+                            <div id="edit-guests-error" style="color: #D32F2F; font-size: 12px; margin-top: 5px; display: none;">
+                                Cette chambre ne peut accueillir que ${room.capacity} personnes maximum.
+                            </div>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-cancel" onclick="cancelEdit()">Annuler</button>
+                            <button class="btn btn-primary" onclick="saveEdit()">Enregistrer les modifications</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Validation du nombre d'invités
+                const editGuestsInput = document.getElementById('edit-guests');
+                editGuestsInput.addEventListener('input', () => {
+                    const editGuestsError = document.getElementById('edit-guests-error');
+                    if (parseInt(editGuestsInput.value) > room.capacity) {
+                        editGuestsError.style.display = 'block';
+                    } else {
+                        editGuestsError.style.display = 'none';
+                    }
+                });
+            } else {
+                // Modal d'affichage
+                modalElement.innerHTML = `
+                    <div class="modal-content">
+                        <h3 style="color: #8B4513; margin-top: 0;">Chambre ${room.roomNumber} - Réservée</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <p><strong>Type de lit:</strong> ${room.bedType}</p>
+                            <p><strong>Capacité:</strong> ${room.capacity} ${room.capacity > 1 ? 'personnes' : 'personne'}</p>
+                            <p><strong>Réservée par:</strong> ${room.bookedBy}</p>
+                            <p><strong>Email:</strong> ${room.email}</p>
+                            <p><strong>Nombre d'invités:</strong> ${room.guests}</p>
+                            <p><strong>Date de réservation:</strong> ${room.bookingDate}</p>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-cancel" onclick="closeModal()">Fermer</button>
+                            <button class="btn btn-secondary" onclick="editBooking()">Modifier</button>
+                            <button class="btn btn-danger" onclick="initiateCancelBooking()">Annuler</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Afficher le modal de confirmation d'annulation
+        function showCancelConfirmModal(room) {
+            const modalElement = document.getElementById('booking-modal');
+            modalElement.style.display = 'flex';
+            
+            modalElement.innerHTML = `
+                <div class="modal-content">
+                    <h3 style="color: #8B4513; margin-top: 0;">Confirmer l'annulation</h3>
+                    <p style="margin-bottom: 15px;">Veuillez confirmer que vous souhaitez annuler votre réservation.</p>
+                    
+                    <div style="background-color: rgba(160, 82, 45, 0.1); padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <p><strong>Chambre:</strong> ${room.roomNumber}</p>
+                        <p><strong>Réservée par:</strong> ${room.bookedBy}</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm-email">Pour confirmer, veuillez saisir l'email utilisé lors de la réservation</label>
+                        <input type="email" id="confirm-email" placeholder="votre@email.com">
+                        <div id="email-error" style="color: #D32F2F; font-size: 12px; margin-top: 5px; display: none;">
+                            L'email ne correspond pas à celui utilisé pour la réservation.
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-cancel" onclick="closeModal()">Retour</button>
+                        <button class="btn btn-danger" id="confirm-cancel-btn" onclick="cancelBooking()">Confirmer l'annulation</button>
+                    </div>
+                </div>
+            `;
+            
+            // Validation de l'email
+            const confirmEmailInput = document.getElementById('confirm-email');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const emailError = document.getElementById('email-error');
+            
+            confirmEmailInput.addEventListener('input', () => {
+                if (confirmEmailInput.value && confirmEmailInput.value !== room.email) {
+                    emailError.style.display = 'block';
+                    confirmCancelBtn.disabled = true;
+                    confirmCancelBtn.style.opacity = '0.5';
+                } else {
+                    emailError.style.display = 'none';
+                    confirmCancelBtn.disabled = false;
+                    confirmCancelBtn.style.opacity = '1';
+                }
+            });
+        }
+        
+        // Afficher le panel admin
+        function renderAdminPanel() {
+            if (!isAdmin) return;
+            
+            const adminPanelElement = document.getElementById('admin-panel');
+            adminPanelElement.style.display = 'block';
+            
+            const bookedRooms = rooms.filter(room => room.isBooked);
+            const totalRooms = rooms.length;
+            const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
+            const bookedCapacity = bookedRooms.reduce((sum, room) => sum + parseInt(room.guests || 0), 0);
+            
+            adminPanelElement.innerHTML = `
+                <div class="admin-header">
+                    <h2 style="color: #6B4226; margin: 0;">Tableau des réservations</h2>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div class="admin-stats">
+                            <div><strong>Chambres réservées:</strong> ${bookedRooms.length}/${totalRooms}</div>
+                            <div><strong>Personnes hébergées:</strong> ${bookedCapacity}/${totalCapacity}</div>
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="exportToCSV()">Exporter en CSV</button>
+                            <button class="btn btn-danger" onclick="confirmReset()">Réinitialiser</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Chambre</th>
+                                <th>Type de lit</th>
+                                <th>Capacité</th>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Invités</th>
+                                <th>Date de réservation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${bookedRooms.length > 0 ? 
+                                bookedRooms
+                                    .sort((a, b) => a.roomNumber - b.roomNumber)
+                                    .map(room => `
+                                        <tr>
+                                            <td>${room.roomNumber}</td>
+                                            <td>${room.bedType}</td>
+                                            <td>${room.capacity}</td>
+                                            <td>${room.bookedBy}</td>
+                                            <td>${room.email}</td>
+                                            <td>${room.guests}</td>
+                                            <td>${room.bookingDate}</td>
+                                        </tr>
+                                    `).join('') : 
+                                `<tr><td colspan="7" style="text-align: center;">Aucune réservation pour le moment</td></tr>`
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        // Actions
+        function bookRoom() {
+            const nameInput = document.getElementById('booking-name');
+            const emailInput = document.getElementById('booking-email');
+            const guestsInput = document.getElementById('booking-guests');
+            
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const guests = guestsInput.value.trim();
+            
+            if (!name || !email || !guests || parseInt(guests) > selectedRoom.capacity) {
+                return;
+            }
+            
+            // Mettre à jour la chambre
+            rooms = rooms.map(room => 
+                room.roomNumber === selectedRoom.roomNumber ? {
+                    ...room,
+                    isBooked: true,
+                    bookedBy: name,
+                    email: email,
+                    guests: guests,
+                    bookingDate: new Date().toLocaleString()
+                } : room
+            );
+            
+            // Sauvegarder et mettre à jour l'affichage
+            saveRooms();
+            renderRooms();
+            if (isAdmin) renderAdminPanel();
+            closeModal();
+        }
+        
+        function editBooking() {
+            editMode = true;
+            showBookedRoomModal(selectedRoom);
+        }
+        
+        function saveEdit() {
+            const nameInput = document.getElementById('edit-name');
+            const emailInput = document.getElementById('edit-email');
+            const guestsInput = document.getElementById('edit-guests');
+            
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const guests = guestsInput.value.trim();
+            
+            if (!name || !email || !guests || parseInt(guests) > selectedRoom.capacity) {
+                return;
+            }
+            
+            // Mettre à jour la chambre
+            rooms = rooms.map(room => 
+                room.roomNumber === selectedRoom.roomNumber ? {
+                    ...room,
+                    bookedBy: name,
+                    email: email,
+                    guests: guests,
+                    bookingDate: room.bookingDate + " (modifié le " + new Date().toLocaleString() + ")"
+                } : room
+            );
+            
+            // Sauvegarder et mettre à jour l'affichage
+            saveRooms();
+            renderRooms();
+            if (isAdmin) renderAdminPanel();
+            editMode = false;
+            closeModal();
+        }
+        
+        function cancelEdit() {
+            editMode = false;
+            showBookedRoomModal(selectedRoom);
+        }
+        
+        function initiateCancelBooking() {
+            showCancelConfirmModal(selectedRoom);
+        }
+        
+        function cancelBooking() {
+            const confirmEmailInput = document.getElementById('confirm-email');
+            const email = confirmEmailInput.value.trim();
+            
+            if (!email || email !== selectedRoom.email) {
+                return;
+            }
+            
+            // Annuler la réservation
+            rooms = rooms.map(room => 
+                room.roomNumber === selectedRoom.roomNumber ? {
+                    ...room,
+                    isBooked: false,
+                    bookedBy: null,
+                    email: null,
+                    guests: null,
+                    bookingDate: null
+                } : room
+            );
+            
+            // Sauvegarder et mettre à jour l'affichage
+            saveRooms();
+            renderRooms();
+            if (isAdmin) renderAdminPanel();
+            closeModal();
+        }
+        
+        function showAdminLogin() {
+            const adminLoginElement = document.getElementById('admin-login');
+            adminLoginElement.style.display = 'block';
+        }
+        
+        function loginAdmin() {
+            const passwordInput = document.getElementById('admin-password');
+            const password = passwordInput.value.trim();
+            
+            if (password === 'mariage2025') {
+                isAdmin = true;
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-button').style.display = 'none';
+                renderAdminPanel();
+            } else {
+                alert('Mot de passe incorrect');
+            }
+        }
+        
+        function exportToCSV() {
+            const bookedRooms = rooms.filter(room => room.isBooked);
+            
+            if (bookedRooms.length === 0) {
+                alert('Aucune réservation à exporter');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "Chambre,Type de lit,Capacité,const csvContent = "data:text/csv;charset=utf-8," 
+                + "Chambre,Type de lit,Capacité,Nom,Email,Nombre d'invités,Date de réservation\n"
+                + bookedRooms.map(room => 
+                    `${room.roomNumber},${room.bedType},${room.capacity},${room.bookedBy},${room.email},${room.guests},${room.bookingDate}`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "reservations.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function confirmReset() {
+            if (confirm("Êtes-vous sûr de vouloir supprimer toutes les réservations ? Cette action est irréversible.")) {
+                resetRooms();
+                renderRooms();
+                renderAdminPanel();
+            }
+        }
+        
+        function closeModal() {
+            const modalElement = document.getElementById('booking-modal');
+            modalElement.style.display = 'none';
+            selectedRoom = null;
+            editMode = false;
+        }
+        
+        function saveRooms() {
+            localStorage.setItem('hotelRooms', JSON.stringify(rooms));
+        }
+        
+        // Configurer les écouteurs d'événements
+        function setupEventListeners() {
+            // Fermer le modal quand on clique sur l'overlay
+            const modalElement = document.getElementById('booking-modal');
+            modalElement.addEventListener('click', function(event) {
+                if (event.target === modalElement) {
+                    closeModal();
+                }
+            });
+            
+            // Bouton d'administration
+            document.getElementById('admin-button').addEventListener('click', showAdminLogin);
+            document.getElementById('login-button').addEventListener('click', loginAdmin);
+        }
+        
+        // Initialiser l'application au chargement
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
