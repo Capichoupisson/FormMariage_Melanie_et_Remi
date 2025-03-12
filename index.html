@@ -4,159 +4,965 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Réservation de Chambre - Mariage</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        /* Styles simplifiés */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8f4e9;
-            color: #5d4037;
+        :root {
+            --autumn-orange: #D94E1F;
+            --autumn-yellow: #F2AF29;
+            --autumn-brown: #592C1C;
+            --autumn-red: #BF2A2A;
+            --autumn-beige: #F2E8DC;
         }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--autumn-beige);
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23bf2a2a' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background-color: #fff9e6;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
-        .hidden { display: none; }
-        button {
-            background-color: #b26b46;
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background-color: var(--autumn-brown);
+            color: white;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before, header::after {
+            content: "";
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30,50 C30,20 70,20 70,50 C70,75 50,80 50,100 C50,80 30,75 30,50 Z' fill='%23D94E1F'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            opacity: 0.7;
+        }
+        
+        header::before {
+            top: -15px;
+            left: 20px;
+            transform: rotate(-15deg);
+        }
+        
+        header::after {
+            top: -15px;
+            right: 20px;
+            transform: rotate(15deg);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.2em;
+        }
+        
+        h2 {
+            color: var(--autumn-brown);
+            border-bottom: 2px solid var(--autumn-orange);
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--autumn-brown);
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--autumn-orange);
+            outline: none;
+            box-shadow: 0 0 5px rgba(217, 78, 31, 0.3);
+        }
+        
+        .room-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .room-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .room-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: var(--autumn-yellow);
+        }
+        
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .room-card.selected {
+            border-color: var(--autumn-orange);
+            box-shadow: 0 0 10px rgba(217, 78, 31, 0.4);
+        }
+        
+        .room-card.selected::before {
+            background-color: var(--autumn-orange);
+        }
+        
+        .room-card.unavailable {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+        }
+        
+        .room-card.unavailable::before {
+            background-color: #aaa;
+        }
+        
+        .room-card h3 {
+            margin-top: 0;
+            color: var(--autumn-brown);
+        }
+        
+        .room-detail {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .room-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        
+        .status-available {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .occupants-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid var(--autumn-orange);
+            display: none;
+        }
+        
+        .occupants-form {
+            margin-top: 15px;
+        }
+        
+        .occupant-input {
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--autumn-orange);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 20px;
         }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
+        
+        .btn:hover {
+            background-color: #c1461c;
+            transform: translateY(-2px);
         }
-        .modal {
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background-color: var(--autumn-brown);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #482318;
+        }
+        
+        .confirmation {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
             display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
         }
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            width: 300px;
+        
+        .admin-panel {
+            display: none;
+        }
+        
+        .admin-login {
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        
+        .room-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .room-table th, .room-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .room-table th {
+            background-color: var(--autumn-brown);
+            color: white;
+        }
+        
+        .room-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .room-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .admin-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--autumn-brown);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-button:hover {
+            text-decoration: underline;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .footer-decoration {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .footer-leaf {
+            width: 30px;
+            height: 30px;
+            margin: 0 5px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30,50 C30,20 70,20 70,50 C70,75 50,80 50,100 C50,80 30,75 30,50 Z' fill='%23D94E1F'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            opacity: 0.7;
+            transform-origin: center bottom;
+        }
+        
+        .footer-leaf:nth-child(1) { transform: rotate(-25deg); }
+        .footer-leaf:nth-child(2) { transform: rotate(-15deg); }
+        .footer-leaf:nth-child(3) { transform: none; }
+        .footer-leaf:nth-child(4) { transform: rotate(15deg); }
+        .footer-leaf:nth-child(5) { transform: rotate(25deg); }
+        
+        /* Animation de feuille qui tombe */
+        @keyframes falling-leaf {
+            0% { 
+                transform: translate(0, -100vh) rotate(0deg); 
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            100% { 
+                transform: translate(var(--end-x), 100vh) rotate(var(--end-rotate)); 
+                opacity: 0.7;
+            }
+        }
+        
+        .falling-leaf {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30,50 C30,20 70,20 70,50 C70,75 50,80 50,100 C50,80 30,75 30,50 Z' fill='%23D94E1F'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            pointer-events: none;
+            z-index: 9999;
+            animation: falling-leaf 15s linear infinite;
+            animation-delay: calc(var(--delay) * 1s);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .room-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
+            
+            .admin-actions .btn {
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="mainContainer">
-        <h1>Réservation de Chambre - Mariage</h1>
+    <div class="container">
+        <header>
+            <h1>Réservation de Chambre</h1>
+            <p>Cérémonie de Mariage</p>
+        </header>
         
-        <div id="userSection">
-            <h2>Vos informations</h2>
-            <label for="firstName">Prénom:</label>
-            <input type="text" id="firstName" required>
+        <div id="main-content">
+            <div class="form-section">
+                <h2>Vos Informations</h2>
+                <div class="form-group">
+                    <label for="firstName">Prénom</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Nom</label>
+                    <input type="text" id="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+            </div>
             
-            <label for="lastName">Nom:</label>
-            <input type="text" id="lastName" required>
+            <div class="form-section">
+                <h2>Sélectionnez une Chambre</h2>
+                <div id="room-list" class="room-list">
+                    <!-- Les chambres seront chargées dynamiquement ici -->
+                    <p>Chargement des chambres...</p>
+                </div>
+                
+                <div id="occupants-section" class="occupants-section">
+                    <h3>Autres Occupants</h3>
+                    <p>Veuillez renseigner toutes les personnes qui occuperont cette chambre (y compris vous-même)</p>
+                    <div id="occupants-form" class="occupants-form">
+                        <!-- Les champs pour les occupants seront générés dynamiquement ici -->
+                    </div>
+                    <button id="validate-btn" class="btn" disabled>Valider ma Réservation</button>
+                </div>
+                
+                <div id="confirmation" class="confirmation">
+                    <h3>Réservation Confirmée !</h3>
+                    <p>Un email de confirmation a été envoyé à votre adresse email.</p>
+                    <p>Merci pour votre réservation.</p>
+                </div>
+            </div>
             
-            <label for="email">Email:</label>
-            <input type="email" id="email" required>
-            
-            <button onclick="continuer()">Continuer</button>
+            <a href="#" id="admin-link" class="back-button">Accès Administrateur</a>
         </div>
         
-        <div id="roomSection" class="hidden">
-            <h2>Sélection de chambre</h2>
-            <p>Chargement des chambres...</p>
+        <div id="admin-login" class="admin-login">
+            <h2>Connexion Administrateur</h2>
+            <div class="form-group">
+                <label for="admin-password">Mot de Passe</label>
+                <input type="password" id="admin-password">
+            </div>
+            <button id="admin-login-btn" class="btn">Se Connecter</button>
+            <div class="back-section">
+                <a href="#" id="back-to-form" class="back-button">Retour au formulaire</a>
+            </div>
         </div>
         
-        <div style="margin-top: 20px;">
-            <a href="#" onclick="showAdminModal(); return false;">Administration</a>
+        <div id="admin-panel" class="admin-panel">
+            <h2>Panneau d'Administration</h2>
+            <div id="admin-room-list">
+                <table class="room-table">
+                    <thead>
+                        <tr>
+                            <th>Chambre</th>
+                            <th>Type de Lit</th>
+                            <th>Capacité</th>
+                            <th>État</th>
+                            <th>Réservé Par</th>
+                            <th>Occupants</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-room-table-body">
+                        <!-- Les données des chambres seront chargées dynamiquement ici -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="admin-actions">
+                <button id="export-data-btn" class="btn">Exporter les Données (.csv)</button>
+                <button id="admin-logout-btn" class="btn btn-secondary">Se Déconnecter</button>
+            </div>
         </div>
+        
+        <footer>
+            <div class="footer-decoration">
+                <div class="footer-leaf"></div>
+                <div class="footer-leaf"></div>
+                <div class="footer-leaf"></div>
+                <div class="footer-leaf"></div>
+                <div class="footer-leaf"></div>
+            </div>
+            <p>© 2025 - Formulaire de Réservation de Chambre pour Mariage</p>
+        </footer>
     </div>
     
-    <div id="adminModal" class="modal">
-        <div class="modal-content">
-            <h3>Accès administrateur</h3>
-            <label for="adminPassword">Mot de passe:</label>
-            <input type="password" id="adminPassword">
-            <button onclick="loginAdmin()">Connexion</button>
-        </div>
-    </div>
-    
-    <div id="adminSection" class="container hidden">
-        <h1>Administration</h1>
-        <p>Section admin</p>
-        <button onclick="backToMain()">Retour</button>
-    </div>
-
+    <!-- Script pour les feuilles qui tombent -->
     <script>
-        // Fonctions simplifiées
-        function continuer() {
-            console.log("Bouton continuer cliqué");
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim();
+        function createFallingLeaves() {
+            const leafColors = ['#D94E1F', '#F2AF29', '#BF2A2A', '#A62F03'];
+            const numLeaves = 15;
             
-            if(!firstName || !lastName || !email) {
-                alert("Veuillez remplir tous les champs");
+            for (let i = 0; i < numLeaves; i++) {
+                const leaf = document.createElement('div');
+                leaf.classList.add('falling-leaf');
+                
+                // Position et animation aléatoires
+                const randomX = Math.random() * 100;
+                const randomDelay = Math.random() * 15;
+                const randomEndX = (Math.random() * 200) - 100;
+                const randomRotate = (Math.random() * 720) - 360;
+                const colorIndex = Math.floor(Math.random() * leafColors.length);
+                
+                leaf.style.left = `${randomX}vw`;
+                leaf.style.setProperty('--delay', randomDelay);
+                leaf.style.setProperty('--end-x', `${randomEndX}px`);
+                leaf.style.setProperty('--end-rotate', `${randomRotate}deg`);
+                leaf.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30,50 C30,20 70,20 70,50 C70,75 50,80 50,100 C50,80 30,75 30,50 Z' fill='${encodeURIComponent(leafColors[colorIndex])}'/%3E%3C/svg%3E")`;
+                
+                document.body.appendChild(leaf);
+            }
+        }
+        
+        // Créer les feuilles au chargement
+        createFallingLeaves();
+    </script>
+    
+    <!-- Script principal de l'application -->
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9VYqm_OBfrepPMWgo7dKGlpWsrl0zCUU",
+            authDomain: "formmariage.firebaseapp.com",
+            projectId: "formmariage",
+            storageBucket: "formmariage.firebasestorage.app",
+            messagingSenderId: "1028876338505",
+            appId: "1:1028876338505:web:dc28ba621ef95539a78698"
+        };
+        
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Données initiales des chambres
+        const dbChambresInitiales = [
+            { roomNumber: 11, bedType: "Double", capacity: 2 },
+            { roomNumber: 12, bedType: "Double", capacity: 2 },
+            { roomNumber: 14, bedType: "Double", capacity: 2 },
+            { roomNumber: 15, bedType: "Double", capacity: 2 },
+            { roomNumber: 16, bedType: "Double", capacity: 2 },
+            { roomNumber: 21, bedType: "Double", capacity: 2 },
+            { roomNumber: 22, bedType: "Double", capacity: 2 },
+            { roomNumber: 36, bedType: "Double", capacity: 2 },
+            { roomNumber: 38, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 39, bedType: "Twin", capacity: 2 },
+            { roomNumber: 40, bedType: "Twin", capacity: 2 },
+            { roomNumber: 41, bedType: "Double", capacity: 2 },
+            { roomNumber: 42, bedType: "Double", capacity: 2 },
+            { roomNumber: 44, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 45, bedType: "Double", capacity: 2 },
+            { roomNumber: 46, bedType: "Double", capacity: 2 },
+            { roomNumber: 48, bedType: "Avec 3 lits séparés", capacity: 3 },
+            { roomNumber: 50, bedType: "Avec 5 lits séparés", capacity: 5 }
+        ];
+        
+        // Éléments du DOM
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const emailInput = document.getElementById('email');
+        const roomListElement = document.getElementById('room-list');
+        const occupantsSection = document.getElementById('occupants-section');
+        const occupantsForm = document.getElementById('occupants-form');
+        const validateBtn = document.getElementById('validate-btn');
+        const confirmationElement = document.getElementById('confirmation');
+        const adminLink = document.getElementById('admin-link');
+        const adminLogin = document.getElementById('admin-login');
+        const adminPanel = document.getElementById('admin-panel');
+        const mainContent = document.getElementById('main-content');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const adminRoomTableBody = document.getElementById('admin-room-table-body');
+        const exportDataBtn = document.getElementById('export-data-btn');
+        const adminLogoutBtn = document.getElementById('admin-logout-btn');
+        const backToFormLink = document.getElementById('back-to-form');
+        
+        // Variables globales
+        let selectedRoom = null;
+        let rooms = [];
+        
+        // Initialiser la base de données si nécessaire
+        async function initializeDatabase() {
+            try {
+                const roomsCollection = await db.collection('rooms').get();
+                
+                if (roomsCollection.empty) {
+                    console.log('Initialisation de la base de données avec les chambres initiales');
+                    
+                    // Ajouter les chambres initiales à la base de données
+                    const batch = db.batch();
+                    
+                    dbChambresInitiales.forEach(room => {
+                        const roomRef = db.collection('rooms').doc(room.roomNumber.toString());
+                        batch.set(roomRef, {
+                            roomNumber: room.roomNumber,
+                            bedType: room.bedType,
+                            capacity: room.capacity,
+                            disponibilite: true,
+                            reservePar: null,
+                            autresOccupants: []
+                        });
+                    });
+                    
+                    await batch.commit();
+                    console.log('Base de données initialisée avec succès');
+                } else {
+                    console.log('Base de données déjà initialisée');
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation de la base de données:', error);
+            }
+        }
+        
+        // Charger les chambres depuis la base de données
+        async function loadRooms() {
+            try {
+                const roomsCollection = await db.collection('rooms').get();
+                rooms = [];
+                
+                roomsCollection.forEach(doc => {
+                    rooms.push(doc.data());
+                });
+                
+                // Trier les chambres par numéro
+                rooms.sort((a, b) => a.roomNumber - b.roomNumber);
+                
+                return rooms;
+            } catch (error) {
+                console.error('Erreur lors du chargement des chambres:', error);
+                return [];
+            }
+        }
+        
+        // Afficher les chambres disponibles
+        function displayRooms(rooms) {
+            roomListElement.innerHTML = '';
+            
+            if (rooms.length === 0) {
+                roomListElement.innerHTML = '<p>Aucune chambre disponible pour le moment.</p>';
                 return;
             }
             
-            document.getElementById('userSection').classList.add('hidden');
-            document.getElementById('roomSection').classList.remove('hidden');
+            rooms.forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = `room-card${room.disponibilite ? '' : ' unavailable'}`;
+                roomCard.setAttribute('data-room-number', room.roomNumber);
+                
+                const statusClass = room.disponibilite ? 'status-available' : 'status-unavailable';
+                const statusText = room.disponibilite ? 'Disponible' : 'Réservée';
+                
+                roomCard.innerHTML = `
+                    <h3>Chambre ${room.roomNumber}</h3>
+                    <div class="room-detail">Type: ${room.bedType}</div>
+                    <div class="room-detail">Capacité: ${room.capacity} personne${room.capacity > 1 ? 's' : ''}</div>
+                    <div class="room-status ${statusClass}">${statusText}</div>
+                `;
+                
+                if (room.disponibilite) {
+                    roomCard.addEventListener('click', () => selectRoom(room));
+                }
+                
+                roomListElement.appendChild(roomCard);
+            });
+        }
+        
+        // Sélectionner une chambre
+        function selectRoom(room) {
+            // Désélectionner la chambre précédente si elle existe
+            const previouslySelected = document.querySelector('.room-card.selected');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('selected');
+            }
             
-            // Afficher un message pour tester
-            document.getElementById('roomSection').innerHTML = `
-                <h2>Section Chambres</h2>
-                <p>Bonjour ${firstName} ${lastName}!</p>
-                <p>Votre email: ${email}</p>
-                <button onclick="backToUserSection()">Retour</button>
-            `;
+            // Sélectionner la nouvelle chambre
+            const selectedCard = document.querySelector(`.room-card[data-room-number="${room.roomNumber}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            selectedRoom = room;
+            
+            // Générer les champs pour les occupants
+            generateOccupantsFields(room.capacity);
+            
+            // Afficher la section des occupants
+            occupantsSection.style.display = 'block';
+            
+            // Faire défiler jusqu'à la section des occupants
+            occupantsSection.scrollIntoView({ behavior: 'smooth' });
         }
         
-        function backToUserSection() {
-            document.getElementById('roomSection').classList.add('hidden');
-            document.getElementById('userSection').classList.remove('hidden');
+        // Générer les champs pour les occupants
+        function generateOccupantsFields(capacity) {
+            occupantsForm.innerHTML = '';
+            
+            for (let i = 0; i < capacity; i++) {
+                const occupantInput = document.createElement('div');
+                occupantInput.className = 'occupant-input';
+                
+                occupantInput.innerHTML = `
+                    <label for="occupant-${i}">Occupant ${i + 1}</label>
+                    <input type="text" id="occupant-${i}" class="occupant-field" required>
+                `;
+                
+                occupantsForm.appendChild(occupantInput);
+            }
+            
+            // Ajouter des écouteurs d'événements pour vérifier si tous les champs sont remplis
+            const occupantFields = document.querySelectorAll('.occupant-field');
+            occupantFields.forEach(field => {
+                field.addEventListener('input', checkOccupantsFields);
+            });
+            
+            // Désactiver le bouton de validation
+            validateBtn.disabled = true;
         }
         
-        function showAdminModal() {
-            console.log("Affichage du modal admin");
-            document.getElementById('adminModal').style.display = 'block';
+        // Vérifier si tous les champs d'occupants sont remplis
+        function checkOccupantsFields() {
+            const occupantFields = document.querySelectorAll('.occupant-field');
+            const allFieldsFilled = Array.from(occupantFields).every(field => field.value.trim() !== '');
+            
+            // Activer ou désactiver le bouton de validation
+            validateBtn.disabled = !allFieldsFilled;
         }
         
-        function loginAdmin() {
-            const password = document.getElementById('adminPassword').value;
-            if(password === 'M+R') {
-                document.getElementById('adminModal').style.display = 'none';
-                document.getElementById('mainContainer').classList.add('hidden');
-                document.getElementById('adminSection').classList.remove('hidden');
+        // Valider la réservation
+        async function validateReservation() {
+            if (!selectedRoom) {
+                alert('Veuillez sélectionner une chambre.');
+                return;
+            }
+            
+            // Récupérer les informations de l'utilisateur
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            const email = emailInput.value.trim();
+            
+            if (!firstName || !lastName || !email) {
+                alert('Veuillez remplir tous les champs d\'information personnelle.');
+                return;
+            }
+            
+            // Vérifier le format de l'email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Veuillez entrer une adresse email valide.');
+                return;
+            }
+            
+            // Récupérer les occupants
+            const occupantFields = document.querySelectorAll('.occupant-field');
+            const occupants = Array.from(occupantFields).map(field => field.value.trim());
+            
+            try {
+                // Mettre à jour la chambre dans la base de données
+                await db.collection('rooms').doc(selectedRoom.roomNumber.toString()).update({
+                    disponibilite: false,
+                    reservePar: {
+                        nom: lastName,
+                        prenom: firstName,
+                        email: email
+                    },
+                    autresOccupants: occupants
+                });
+                
+                // Afficher la confirmation
+                occupantsSection.style.display = 'none';
+                confirmationElement.style.display = 'block';
+                
+                // Réinitialiser la sélection de chambre
+                selectedRoom = null;
+                
+                // Recharger les chambres pour mettre à jour l'affichage
+                const updatedRooms = await loadRooms();
+                displayRooms(updatedRooms);
+                
+                // Simuler l'envoi d'un email (dans un environnement réel, cela serait géré côté serveur)
+                console.log(`Email de confirmation envoyé à ${email}`);
+                
+                // Faire défiler jusqu'à la confirmation
+                confirmationElement.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Erreur lors de la validation de la réservation:', error);
+                alert('Une erreur est survenue lors de la validation de votre réservation. Veuillez réessayer.');
+            }
+        }
+        
+        // Accéder à la page administrateur
+        function showAdminLogin() {
+            mainContent.style.display = 'none';
+            adminLogin.style.display = 'block';
+            adminPanel.style.display = 'none';
+        }
+        
+        // Valider le mot de passe administrateur
+        function validateAdminPassword() {
+            const password = adminPasswordInput.value.trim();
+            
+            if (password === 'M+R') {
+                adminLogin.style.display = 'none';
+                adminPanel.style.display = 'block';
+                loadAdminData();
             } else {
-                alert('Mot de passe incorrect');
+                alert('Mot de passe incorrect.');
+            }
+            
+            // Effacer le mot de passe
+            adminPasswordInput.value = '';
+        }
+        
+        // Charger les données pour l'administrateur
+        async function loadAdminData() {
+            try {
+                const roomsData = await loadRooms();
+                displayAdminRooms(roomsData);
+            } catch (error) {
+                console.error('Erreur lors du chargement des données administrateur:', error);
             }
         }
         
-        function backToMain() {
-            document.getElementById('adminSection').classList.add('hidden');
-            document.getElementById('mainContainer').classList.remove('hidden');
+        // Afficher les chambres dans le panneau administrateur
+        function displayAdminRooms(rooms) {
+            adminRoomTableBody.innerHTML = '';
+            
+            rooms.forEach(room => {
+                const tr = document.createElement('tr');
+                
+                // Préparer les données d'occupants pour l'affichage
+                const reservedBy = room.reservePar 
+                    ? `${room.reservePar.prenom} ${room.reservePar.nom} (${room.reservePar.email})` 
+                    : 'N/A';
+                
+                const occupantsText = room.autresOccupants && room.autresOccupants.length > 0
+                    ? room.autresOccupants.join(', ')
+                    : 'N/A';
+                
+                const statusText = room.disponibilite ? 'Disponible' : 'Réservée';
+                const statusClass = room.disponibilite ? 'status-available' : 'status-unavailable';
+                
+                tr.innerHTML = `
+                    <td>${room.roomNumber}</td>
+                    <td>${room.bedType}</td>
+                    <td>${room.capacity}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>${reservedBy}</td>
+                    <td>${occupantsText}</td>
+                    <td>
+                        ${!room.disponibilite ? 
+                            `<button class="btn reset-room-btn" data-room-number="${room.roomNumber}">Réinitialiser</button>` : 
+                            ''}
+                    </td>
+                `;
+                
+                adminRoomTableBody.appendChild(tr);
+            });
+            
+            // Ajouter des écouteurs d'événements pour les boutons de réinitialisation
+            const resetButtons = document.querySelectorAll('.reset-room-btn');
+            resetButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const roomNumber = button.getAttribute('data-room-number');
+                    resetRoom(roomNumber);
+                });
+            });
         }
         
-        // Click handler pour fermer le modal quand on clique à l'extérieur
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('adminModal')) {
-                document.getElementById('adminModal').style.display = "none";
+        // Réinitialiser une chambre (remettre à disponible)
+        async function resetRoom(roomNumber) {
+            if (confirm(`Êtes-vous sûr de vouloir réinitialiser la chambre ${roomNumber} ?`)) {
+                try {
+                    await db.collection('rooms').doc(roomNumber).update({
+                        disponibilite: true,
+                        reservePar: null,
+                        autresOccupants: []
+                    });
+                    
+                    // Recharger les données administrateur
+                    loadAdminData();
+                } catch (error) {
+                    console.error('Erreur lors de la réinitialisation de la chambre:', error);
+                    alert('Une erreur est survenue lors de la réinitialisation de la chambre.');
+                }
             }
         }
         
-        // Message de débogage
-        console.log("Script chargé");
+        // Exporter les données au format CSV
+        function exportDataToCSV() {
+            const csvContent = [
+                ['Numéro de Chambre', 'Type de Lit', 'Capacité', 'Disponibilité', 'Réservé Par', 'Email', 'Occupants']
+            ];
+            
+            rooms.forEach(room => {
+                const reservedByName = room.reservePar ? `${room.reservePar.prenom} ${room.reservePar.nom}` : '';
+                const reservedByEmail = room.reservePar ? room.reservePar.email : '';
+                const occupants = room.autresOccupants ? room.autresOccupants.join('; ') : '';
+                
+                csvContent.push([
+                    room.roomNumber,
+                    room.bedType,
+                    room.capacity,
+                    room.disponibilite ? 'Disponible' : 'Réservée',
+                    reservedByName,
+                    reservedByEmail,
+                    occupants
+                ]);
+            });
+            
+            // Convertir en CSV avec PapaParse
+            const csv = Papa.unparse(csvContent);
+            
+            // Créer un blob et un lien de téléchargement
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `reservations_chambres_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Se déconnecter du panneau administrateur
+        function adminLogout() {
+            adminPanel.style.display = 'none';
+            mainContent.style.display = 'block';
+            
+            // Réinitialiser l'affichage du formulaire principal
+            occupantsSection.style.display = 'none';
+            confirmationElement.style.display = 'none';
+            
+            // Recharger les chambres pour le formulaire principal
+            loadRooms().then(rooms => displayRooms(rooms));
+        }
+        
+        // Retour au formulaire depuis la page de connexion admin
+        function backToForm() {
+            adminLogin.style.display = 'none';
+            mainContent.style.display = 'block';
+        }
+        
+        // Ajouter des écouteurs d'événements
+        validateBtn.addEventListener('click', validateReservation);
+        adminLink.addEventListener('click', showAdminLogin);
+        adminLoginBtn.addEventListener('click', validateAdminPassword);
+        exportDataBtn.addEventListener('click', exportDataToCSV);
+        adminLogoutBtn.addEventListener('click', adminLogout);
+        backToFormLink.addEventListener('click', backToForm);
+        
+        // Initialiser l'application
+        async function initApp() {
+            await initializeDatabase();
+            const roomsData = await loadRooms();
+            displayRooms(roomsData);
+        }
+        
+        // Démarrer l'application au chargement de la page
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
